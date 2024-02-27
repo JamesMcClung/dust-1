@@ -12,9 +12,6 @@ impl Plugin for SimPlugin {
 }
 
 #[derive(Component)]
-struct Particle;
-
-#[derive(Component)]
 struct ParticleCoords {
     x: usize,
     y: usize,
@@ -35,7 +32,6 @@ fn spawn_particles(mut commands: Commands) {
     for x in 0..N_PIXELS.x {
         for y in 0..N_PIXELS.y {
             commands.spawn((
-                Particle,
                 ParticleCoords::new(x, y),
                 SpriteBundle {
                     sprite: Sprite {
