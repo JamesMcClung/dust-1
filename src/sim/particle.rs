@@ -1,6 +1,10 @@
+use super::gas::GasDensityType;
+
 pub enum Particle {
     Vacuum,
-    Air,
+    Air {
+        density: GasDensityType,
+    },
 }
 
 impl Default for Particle {
