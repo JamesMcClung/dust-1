@@ -12,6 +12,14 @@ impl<T> PropertyGrid<T> {
         &self.arr[x][y]
     }
 
+    pub fn get_checked(&self, x: isize, y: isize) -> Option<&T> {
+        if x < 0 || y < 0 {
+            None
+        } else {
+            self.arr.get(x as usize)?.get(y as usize)
+        }
+    }
+
     pub fn get_mut(&mut self, x: usize, y: usize) -> &mut T {
         &mut self.arr[x][y]
     }

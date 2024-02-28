@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::camera::{camera_to_grid, window_to_camera};
 use crate::sim::{Particle, PropertyGrid};
+use crate::sim::gas::{GasDensity, GasDensityType, NORMAL_GAS_DENSITY};
 use crate::schedule::SimSet;
 
 pub struct DrawPlugin;
@@ -14,6 +15,7 @@ impl Plugin for DrawPlugin {
 
 fn draw_particle(
     mut particle_grid: Query<&mut PropertyGrid<Particle>>,
+    mut gas_density: Query<&mut PropertyGrid<GasDensityType>, With<GasDensity>>,
     cursor_input: Res<ButtonInput<MouseButton>>,
     window: Query<&Window>,
     camera: Query<&Transform, With<Camera>>,
@@ -25,6 +27,7 @@ fn draw_particle(
         if let Some(cursor_position) = window.cursor_position() {
             if let Some(grid_coords) = camera_to_grid(window_to_camera(cursor_position, window, camera)) {
                 *particle_grid.single_mut().get_mut(grid_coords.x, grid_coords.y) = Particle::Air;
+                *gas_density.single_mut().get_mut(grid_coords.x, grid_coords.y) = NORMAL_GAS_DENSITY;
             }
         }
     }
