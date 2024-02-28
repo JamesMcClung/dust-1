@@ -34,22 +34,23 @@ fn gas_dispersion(mut density: Query<&mut PropertyGrid<GasDensityType>, With<Gas
 
     let mut density_deltas = [[0.0 as GasDensityType; N_PIXELS.y]; N_PIXELS.x];
     let neighbors = [(-1, 0), (1, 0), (0, -1), (0, 1)];
+    let max_recipients = neighbors.len() as GasDensityType + 1.0;
 
     for i in 0..N_PIXELS.x as isize {
         for j in 0..N_PIXELS.y as isize {
             if matches!(particles.get(i as usize, j as usize), Particle::Air) {
-                let mut n_recipients: GasDensityType = 1.0;
+                let mut n_neighbor_recipients: GasDensityType = 0.0;
                 for (ni, nj) in neighbors {
                     if matches!(particles.get_checked(i + ni, j + nj), Some(Particle::Air | Particle::Vacuum)) {
-                        n_recipients += 1.0;
+                        n_neighbor_recipients += 1.0;
                     }
                 }
 
                 let dispersed_amount = density.get(i as usize, j as usize) * DISPERSION_RATE;
-                density_deltas[i as usize][j as usize] -= dispersed_amount * (n_recipients - 1.0) / n_recipients;
+                density_deltas[i as usize][j as usize] -= dispersed_amount * n_neighbor_recipients / max_recipients;
                 for (ni, nj) in neighbors {
                     if matches!(particles.get_checked(i + ni, j + nj), Some(Particle::Air | Particle::Vacuum)) {
-                        density_deltas[(i + ni) as usize][(j + nj) as usize] += dispersed_amount / n_recipients;
+                        density_deltas[(i + ni) as usize][(j + nj) as usize] += dispersed_amount / max_recipients;
                     }
                 }
             }
