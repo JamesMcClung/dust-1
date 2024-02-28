@@ -1,5 +1,5 @@
 mod particle;
-mod particle_grid;
+mod property_grid;
 
 use bevy::prelude::*;
 
@@ -7,7 +7,7 @@ use crate::schedule::SimSet;
 use crate::camera::grid_to_camera;
 
 pub use particle::Particle;
-pub use particle_grid::PropertyGrid;
+pub use property_grid::PropertyGrid;
 
 pub const N_PIXELS: ParticleCoords = ParticleCoords::new(128, 128);
 pub const PIXEL_SIZE: Vec2 = Vec2::new(4.0, 4.0);
