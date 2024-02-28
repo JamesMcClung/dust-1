@@ -1,6 +1,7 @@
 pub mod gas;
 mod particle;
 mod property_grid;
+mod types;
 
 
 use bevy::prelude::*;
