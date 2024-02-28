@@ -14,6 +14,7 @@ use sim::SimPlugin;
 
 fn main() {
     App::new()
+        .insert_resource(Msaa::Off)
         .add_plugins(DefaultPlugins)
         .add_plugins(DrawPlugin)
         .add_plugins(ColorPlugin)
