@@ -5,10 +5,22 @@ use super::{Coords, N_PIXELS};
 
 #[derive(Component)]
 pub struct PropertyGrid<T> {
-    arr: Box<[[T; N_PIXELS.y]; N_PIXELS.x]>,
+    arr: Vec<Vec<T>>,
 }
 
 impl<T> PropertyGrid<T> {
+    pub fn new(mut callback: impl FnMut(Coords) -> T) -> Self {
+        let mut res = Self { arr: Vec::with_capacity(N_PIXELS.x) };
+        for x in 0..N_PIXELS.x {
+            let mut col = Vec::with_capacity(N_PIXELS.y);
+            for y in 0..N_PIXELS.y {
+                col.push(callback(Coords::new(x, y)));
+            }
+            res.arr.push(col);
+        }
+        res
+    }
+    
     pub fn get(&self, coords: impl Into<Coords>) -> &T {
         let coords = coords.into();
         &self.arr[coords.x][coords.y]
@@ -41,24 +53,24 @@ impl<T> PropertyGrid<T> {
 
 impl<T: Default> Default for PropertyGrid<T> {
     fn default() -> Self {
-        Self {
-            arr: Box::new(std::array::from_fn(|_| std::array::from_fn(|_| T::default()))),
-        }
+        Self::new(|_| T::default())
+    }
+}
+
+impl<T: Copy> PropertyGrid<T> {
+    fn of(val: T) -> Self {
+        Self::new(|_| val.clone())
     }
 }
 
 impl PropertyGrid<Scalar> {
     pub fn zero() -> Self {
-        Self {
-            arr: Box::new([[0.0; N_PIXELS.y]; N_PIXELS.x])
-        }
+        Self::of(0.0)
     }
 }
 
 impl PropertyGrid<Vector> {
     pub fn zero() -> Self {
-        Self {
-            arr: Box::new([[Vector::ZERO; N_PIXELS.y]; N_PIXELS.x])
-        }
+        Self::of(Vector::ZERO)
     }
 }
