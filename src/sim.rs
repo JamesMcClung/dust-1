@@ -26,7 +26,7 @@ pub struct SimPlugin;
 impl Plugin for SimPlugin {
     fn build(&self, app: &mut App) {
         app
-            .add_systems(PostStartup, (spawn_particle_grid, spawn_sprites).chain())
+            .add_systems(Startup, (spawn_particle_grid, spawn_sprites).chain())
             .add_plugins(GasPlugin);
     }
 }
