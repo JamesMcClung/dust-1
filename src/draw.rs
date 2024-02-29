@@ -24,7 +24,7 @@ fn draw_particle(
     if cursor_input.pressed(MouseButton::Left) {
         if let Some(cursor_position) = window.cursor_position() {
             if let Some(grid_coords) = camera_to_grid(window_to_camera(cursor_position, window, camera)) {
-                *particle_grid.single_mut().get_mut(grid_coords.x, grid_coords.y) = Particle::Air { gas_properties: default() };
+                *particle_grid.single_mut().get_mut(grid_coords) = Particle::Air { gas_properties: default() };
             }
         }
     }

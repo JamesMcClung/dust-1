@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::schedule::SimSet;
-use crate::sim::{Particle, ParticleCoords, PropertyGrid};
+use crate::sim::{Coords, Particle, PropertyGrid};
 use crate::sim::gas::{GasProperties, NORMAL_GAS_DENSITY};
 
 pub struct ColorPlugin;
@@ -18,11 +18,11 @@ static AIR_COLOR: Color = Color::rgba(0.0, 0.9, 0.9, 0.2);
 
 fn update_colors(
     particle_grid: Query<&PropertyGrid<Particle>>,
-    mut coords: Query<(&ParticleCoords, &mut Sprite)>,
+    mut coords: Query<(&Coords, &mut Sprite)>,
 ) {
     let particle_grid = particle_grid.single();
     for (coords, mut sprite) in coords.iter_mut() {
-        sprite.color = get_color(particle_grid.get(coords.x, coords.y));
+        sprite.color = get_color(particle_grid.get(*coords));
     }
 }
 
