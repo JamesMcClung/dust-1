@@ -1,6 +1,7 @@
 mod camera;
 mod color;
 mod draw;
+mod fps;
 mod schedule;
 mod sim;
 
@@ -16,6 +17,7 @@ fn main() {
     App::new()
         .insert_resource(Msaa::Off)
         .add_plugins(DefaultPlugins)
+        .add_plugins(fps::FpsPlugin)
         .add_plugins(DrawPlugin)
         .add_plugins(ColorPlugin)
         .add_plugins(CameraPlugin)
