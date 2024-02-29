@@ -4,7 +4,7 @@ use super::N_PIXELS;
 
 #[derive(Component)]
 pub struct PropertyGrid<T> {
-    arr: [[T; N_PIXELS.y]; N_PIXELS.x],
+    arr: Box<[[T; N_PIXELS.y]; N_PIXELS.x]>,
 }
 
 impl<T> PropertyGrid<T> {
@@ -28,7 +28,7 @@ impl<T> PropertyGrid<T> {
 impl<T: Default> Default for PropertyGrid<T> {
     fn default() -> Self {
         Self {
-            arr: std::array::from_fn(|_| std::array::from_fn(|_| T::default())),
+            arr: Box::new(std::array::from_fn(|_| std::array::from_fn(|_| T::default()))),
         }
     }
 }
