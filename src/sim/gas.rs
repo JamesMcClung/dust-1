@@ -30,6 +30,10 @@ impl Default for GasProperties {
 }
 
 impl GasProperties {
+    fn velocity(&self) -> Vector {
+        self.momentum / self.mass
+    }
+
     fn merge(&mut self, other: Self) {
         self.momentum += other.momentum;
         self.internal_position = (self.internal_position * self.mass + other.internal_position * other.mass) / (self.mass + other.mass);
@@ -109,7 +113,7 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
     
     for coords in particles.coords() {
         if let Particle::Air { gas_properties } = particles.get(coords) {
-            let velocity = gas_properties.momentum / gas_properties.mass;
+            let velocity = gas_properties.velocity();
             let new_pos = gas_properties.internal_position + velocity;
 
             if 0.0 <= new_pos.x && new_pos.x < 1.0
