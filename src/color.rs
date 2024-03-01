@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::schedule::SimSet;
 use crate::sim::{Coords, Particle, PropertyGrid};
-use crate::sim::gas::{GasProperties, NORMAL_GAS_DENSITY};
+use crate::sim::gas::GasProperties;
 
 pub struct ColorPlugin;
 
@@ -29,6 +29,6 @@ fn update_colors(
 fn get_color(particle: &Particle) -> Color {
     match particle {
         Particle::Vacuum => VACUUM_COLOR,
-        Particle::Air { gas_properties: GasProperties { mass: density, .. } } => AIR_COLOR.with_a(density / NORMAL_GAS_DENSITY)
+        Particle::Air { gas_properties: GasProperties { mass: density, .. } } => AIR_COLOR.with_a(density / GasProperties::DEFAULT_MASS)
     }
 }

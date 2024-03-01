@@ -22,7 +22,7 @@ pub struct GasProperties {
 impl Default for GasProperties {
     fn default() -> Self {
         Self {
-            mass: NORMAL_GAS_DENSITY,
+            mass: Self::DEFAULT_MASS,
             momentum: Vector::ZERO,
             internal_position: Vector::new(0.5, 0.5),
         }
@@ -30,6 +30,10 @@ impl Default for GasProperties {
 }
 
 impl GasProperties {
+    pub const DEFAULT_MASS: Scalar = 100.0;
+
+    const DISPERSION_RATE: f32 = 1.0;
+
     fn velocity(&self) -> Vector {
         self.momentum / self.mass
     }
@@ -41,9 +45,6 @@ impl GasProperties {
     }
 }
 
-pub const NORMAL_GAS_DENSITY: Scalar = 100.0;
-
-const DISPERSION_RATE: f32 = 1.0;
 const MINIMUM_DISPERSION_MASS: Scalar = 1e-3;
 
 /// Air disperses to orthogonally adjacent `Vacuum` and `Air` cells.
@@ -73,8 +74,8 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
                 }
             }
 
-            let dispersed_mass = gas_properties.mass * DISPERSION_RATE;
-            let dispersed_momentum = gas_properties.momentum * DISPERSION_RATE;
+            let dispersed_mass = gas_properties.mass * GasProperties::DISPERSION_RATE;
+            let dispersed_momentum = gas_properties.momentum * GasProperties::DISPERSION_RATE;
 
             *mass_deltas.get_mut(coords) -= dispersed_mass * n_neighbor_recipients / max_recipients;
             *momentum_deltas.get_mut(coords) -= dispersed_momentum * n_neighbor_recipients / max_recipients;
