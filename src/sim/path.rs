@@ -27,8 +27,8 @@ pub fn get_path(start: Vector, end: Vector) -> Vec<RelCoords> {
 
             let delta_pos = (end - start).abs();
 
-            let dx_in_cell = if dx > 0.0 { fract_below(start.x) } else { fract_above(start.x) };
-            let dy_in_cell = if dy > 0.0 { fract_below(start.y) } else { fract_above(start.y) };
+            let dx_in_cell = if dx < 0.0 { fract_below(start.x) } else { fract_above(start.x) };
+            let dy_in_cell = if dy < 0.0 { fract_below(start.y) } else { fract_above(start.y) };
 
             let mut traversed = Vector::ZERO;
 
@@ -52,10 +52,10 @@ pub fn get_path(start: Vector, end: Vector) -> Vec<RelCoords> {
 
 /// Equal to `ceil(f) - f`
 pub fn fract_above(f: f32) -> f32 {
-    (f.fract() + 1.0).fract()
+    f.ceil() - f
 }
 
 /// Equal to `f - floor(f)`
 pub fn fract_below(f: f32) -> f32 {
-    (f.fract() - 1.0).fract()
+    f - f.floor()
 }
