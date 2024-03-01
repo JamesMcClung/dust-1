@@ -29,13 +29,14 @@ impl Default for GasProperties {
 pub const NORMAL_GAS_DENSITY: Scalar = 100.0;
 
 const DISPERSION_RATE: f32 = 1.0;
+const MINIMUM_DISPERSION_MASS: Scalar = 1e-3;
 
-/**
-    Air disperses to orthogonally adjacent `Vacuum` and `Air` cells.
-    
-    The rate of dispersion is determined by `DISPERSION_RATE`, with 0.0 corresponding to no dispersion and 1.0 corresponding to complete dispersion,
-    i.e., a cell of gas will evenly spread itself out across itself and its neighbors in a single tick.
-*/
+/// Air disperses to orthogonally adjacent `Vacuum` and `Air` cells.
+/// 
+/// The rate of dispersion is determined by `DISPERSION_RATE`, with 0.0 corresponding to no dispersion and 1.0 corresponding to complete dispersion,
+/// i.e., a cell of gas will evenly spread itself out across itself and its neighbors in a single tick.
+///
+/// Air will not disperse if its mass is less than `MINIMUM_DISPERSION_MASS`.
 fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let mut particles = particles.single_mut();
 
@@ -46,6 +47,10 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
 
     for coords in particles.coords() {
         if let Particle::Air { gas_properties } = particles.get(coords) {
+            if gas_properties.mass < MINIMUM_DISPERSION_MASS {
+                continue;
+            }
+            
             let mut n_neighbor_recipients = 0.0;
             for delta in neighbor_deltas {
                 if matches!(particles.try_get(coords + delta), Some(Particle::Air {..} | Particle::Vacuum)) {

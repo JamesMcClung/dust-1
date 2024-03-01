@@ -29,6 +29,6 @@ fn update_colors(
 fn get_color(particle: &Particle) -> Color {
     match particle {
         Particle::Vacuum => VACUUM_COLOR,
-        Particle::Air { gas_properties: GasProperties { mass: density, .. } } => AIR_COLOR.with_a(0.01 + 0.99 * density / NORMAL_GAS_DENSITY)
+        Particle::Air { gas_properties: GasProperties { mass: density, .. } } => AIR_COLOR.with_a(density / NORMAL_GAS_DENSITY)
     }
 }
