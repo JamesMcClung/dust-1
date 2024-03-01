@@ -1,9 +1,9 @@
 pub mod gas;
 mod gravity;
 mod particle;
-mod path;
+pub mod path;
 mod property_grid;
-mod types;
+pub mod types;
 mod coords;
 
 
