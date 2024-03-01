@@ -37,7 +37,8 @@ impl<T> PropertyGrid<T> {
     }
 
     pub fn try_get_mut(&mut self, coords: impl TryInto<Coords>) -> Option<&mut T> {
-        Some(self.get_mut(coords.try_into().ok()?))
+        let coords: Coords = coords.try_into().ok()?;
+        self.arr.get_mut(coords.x)?.get_mut(coords.y)
     }
 
     pub fn swap(&mut self, coords: Coords, mut val: T) -> T {
