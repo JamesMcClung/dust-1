@@ -40,6 +40,11 @@ impl<T> PropertyGrid<T> {
         Some(self.get_mut(coords.try_into().ok()?))
     }
 
+    pub fn swap(&mut self, coords: Coords, mut val: T) -> T {
+        std::mem::swap(self.get_mut(coords), &mut val);
+        val
+    }
+
     pub fn dims(&self) -> Coords {
         Coords::new(self.arr.len(), self.arr[0].len())
     }

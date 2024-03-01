@@ -1,20 +1,22 @@
 use bevy::prelude::*;
 
-use super::{Particle, PropertyGrid, RelCoords};
+use super::{Coords, Particle, PropertyGrid, RelCoords};
 use super::types::{Scalar, Vector};
 use crate::schedule::SimSet;
+use super::path;
 
 pub struct GasPlugin;
 
 impl Plugin for GasPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, gas_dispersion.in_set(SimSet::Physics));
+        app.add_systems(Update, (gas_bulk_flow, gas_dispersion).chain().in_set(SimSet::Gas));
     }
 }
 
 pub struct GasProperties {
     pub mass: Scalar,
     pub momentum: Vector,
+    internal_position: Vector,
 }
 
 impl Default for GasProperties {
@@ -22,7 +24,16 @@ impl Default for GasProperties {
         Self {
             mass: NORMAL_GAS_DENSITY,
             momentum: Vector::ZERO,
+            internal_position: Vector::new(0.5, 0.5),
         }
+    }
+}
+
+impl GasProperties {
+    fn merge(&mut self, other: Self) {
+        self.momentum += other.momentum;
+        self.internal_position = (self.internal_position * self.mass + other.internal_position * other.mass) / (self.mass + other.mass);
+        self.mass += other.mass;
     }
 }
 
@@ -84,10 +95,66 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
                     gas_properties: GasProperties {
                         mass: *mass_deltas.get(coords),
                         momentum: *momentum_deltas.get(coords),
+                        ..default()
                     },
                 };
             }
         }
     }
+}
+
+fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
+    let mut particles = particles.single_mut();
+    let mut moved_gases = Vec::<(Coords, GasProperties)>::new();
     
+    for coords in particles.coords() {
+        if let Particle::Air { gas_properties } = particles.get(coords) {
+            let velocity = gas_properties.momentum / gas_properties.mass;
+            let new_pos = gas_properties.internal_position + velocity;
+
+            if 0.0 <= new_pos.x && new_pos.x < 1.0
+            && 0.0 <= new_pos.y && new_pos.y < 1.0 {
+                let Particle::Air { gas_properties } = particles.get_mut(coords) else { panic!() };
+                gas_properties.internal_position = new_pos;
+                continue;
+            }
+
+            let mut net_reflect = RelCoords::new(1, 1);
+            let mut end_coords = coords;
+
+            for delta in path::get_path_deltas(gas_properties.internal_position, new_pos) {
+                let delta = delta * net_reflect;
+                let next_coords = coords + delta;
+
+                match particles.try_get(next_coords) {
+                    None => {
+                        let reflect = RelCoords::ONE - 2 * delta.abs();
+                        net_reflect *= reflect;
+                    },
+                    Some(Particle::Vacuum | Particle::Air {..}) => {
+                        end_coords = next_coords.try_into().unwrap()
+                    },
+                }
+            }
+
+            let Particle::Air { mut gas_properties } = particles.swap(coords, Particle::Vacuum) else { panic!() };
+            gas_properties.momentum *= net_reflect;
+            if net_reflect.x < 0 {
+                gas_properties.internal_position.x = 1.0 - gas_properties.internal_position.x;
+            }
+            if net_reflect.y < 0 {
+                gas_properties.internal_position.y = 1.0 - gas_properties.internal_position.y;
+            }
+            gas_properties.internal_position += velocity * net_reflect;
+            gas_properties.internal_position = gas_properties.internal_position.fract(); // note Vec2::fract behaves differently from f32::fract
+            moved_gases.push((end_coords, gas_properties));
+        }
+    }
+
+    for (coords, moved_gas_properties) in moved_gases {
+        match particles.get_mut(coords) {
+            p @ Particle::Vacuum => *p = Particle::Air { gas_properties: moved_gas_properties },
+            Particle::Air { gas_properties } => gas_properties.merge(moved_gas_properties),
+        }
+    }
 }

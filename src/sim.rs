@@ -1,5 +1,7 @@
 pub mod gas;
+mod gravity;
 mod particle;
+mod path;
 mod property_grid;
 mod types;
 mod coords;
@@ -11,9 +13,7 @@ use crate::camera::grid_to_camera;
 
 pub use particle::Particle;
 pub use property_grid::PropertyGrid;
-pub use self::coords::{Coords, RelCoords};
-
-use gas::GasPlugin;
+pub use coords::{Coords, RelCoords};
 
 
 pub const N_PIXELS: Coords = Coords::new(128, 128);
@@ -29,7 +29,8 @@ impl Plugin for SimPlugin {
     fn build(&self, app: &mut App) {
         app
             .add_systems(Startup, (spawn_particle_grid, spawn_sprites).chain())
-            .add_plugins(GasPlugin);
+            .add_plugins(gravity::GravityPlugin)
+            .add_plugins(gas::GasPlugin);
     }
 }
 
