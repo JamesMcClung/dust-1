@@ -4,7 +4,7 @@ use crate::schedule::SimSet;
 use super::{types::Vector, Particle, PropertyGrid};
 
 
-const GRAVITY_ACCELERATION: Vector = Vector::new(0.0, -0.01);
+pub const GRAVITY_ACCELERATION: Vector = Vector::new(0.0, -0.01);
 
 pub struct GravityPlugin;
 

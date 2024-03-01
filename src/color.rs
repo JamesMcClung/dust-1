@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use crate::schedule::SimSet;
-use crate::sim::{Coords, Particle, PropertyGrid};
+use crate::sim::gravity::GRAVITY_ACCELERATION;
+use crate::sim::types::Scalar;
+use crate::sim::{Coords, Particle, PropertyGrid, N_PIXELS};
 use crate::sim::gas::GasProperties;
 
 pub struct ColorPlugin;
@@ -14,7 +16,6 @@ impl Plugin for ColorPlugin {
 
 
 static VACUUM_COLOR: Color = Color::rgba(0.0, 0.0, 0.0, 0.0);
-static AIR_COLOR: Color = Color::rgba(0.0, 0.9, 0.9, 0.2);
 
 fn update_colors(
     particle_grid: Query<&PropertyGrid<Particle>>,
@@ -26,9 +27,23 @@ fn update_colors(
     }
 }
 
+const MAX_HEAT: Scalar = N_PIXELS.y as Scalar * GasProperties::DEFAULT_MASS * -GRAVITY_ACCELERATION.y;
+
 fn get_color(particle: &Particle) -> Color {
     match particle {
         Particle::Vacuum => VACUUM_COLOR,
-        Particle::Air { gas_properties: GasProperties { mass: density, .. } } => AIR_COLOR.with_a(density / GasProperties::DEFAULT_MASS)
+        Particle::Air { gas_properties } => {
+            let temp_param = sigmoid(gas_properties.temperature() / (GasProperties::DEFAULT_TEMPERATURE + MAX_HEAT / (gas_properties.mass * GasProperties::SPECIFIC_HEAT)) - 0.5);
+            Color::rgba(
+                temp_param,
+                1.0 - temp_param,
+                1.0 - temp_param,
+                gas_properties.mass / GasProperties::DEFAULT_MASS,
+            )
+        },
     }
+}
+
+fn sigmoid(x: f32) -> f32 {
+    (x.tanh() + 1.0) / 2.0
 }

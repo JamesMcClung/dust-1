@@ -4,6 +4,7 @@ mod draw;
 mod fps;
 mod schedule;
 mod sim;
+mod zero;
 
 use bevy::prelude::*;
 

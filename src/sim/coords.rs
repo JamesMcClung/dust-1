@@ -184,6 +184,12 @@ impl std::ops::Add<RelCoords> for Vector {
     }
 }
 
+impl From<RelCoords> for Vector {
+    fn from(value: RelCoords) -> Self {
+        Self::new(value.x as f32, value.y as f32)
+    }
+}
+
 // i32/RelCoords
 
 impl std::ops::Mul<isize> for RelCoords {
