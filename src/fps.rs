@@ -55,33 +55,24 @@ fn setup_fps_counter(
             ..Default::default()
         },
     )).id();
-    // create our text
+
+    let style = TextStyle {
+        font_size: 16.0,
+        color: Color::WHITE,
+        ..default()
+    };
+
     let text_fps = commands.spawn((
         FpsText,
         TextBundle {
-            // use two sections, so it is easy to update just the number
             text: Text::from_sections([
                 TextSection {
                     value: "FPS: ".into(),
-                    style: TextStyle {
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                        // if you want to use your game's font asset,
-                        // uncomment this and provide the handle:
-                        // font: my_font_handle
-                        ..default()
-                    }
+                    style: style.clone(),
                 },
                 TextSection {
                     value: " N/A".into(),
-                    style: TextStyle {
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                        // if you want to use your game's font asset,
-                        // uncomment this and provide the handle:
-                        // font: my_font_handle
-                        ..default()
-                    }
+                    style: style.clone(),
                 },
             ]),
             ..Default::default()
