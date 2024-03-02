@@ -23,8 +23,19 @@ pub struct ParticleToDraw(pub Particle);
 
 const INITIAL_PARTICLE_TO_DRAW: Particle = Particle::Air { gas_properties: GasProperties::DEFAULT };
 
+fn get_section(text: impl Into<String>) -> TextSection {
+    TextSection {
+        value: text.into(),
+        style: TextStyle {
+            font_size: 16.0,
+            color: Color::WHITE,
+            ..default()
+        },
+    }
+}
+
 fn setup_palette(mut commands: Commands) {
-    let palette_root = commands.spawn((
+    commands.spawn((
         PaletteRoot,
         NodeBundle {
             style: Style {
@@ -36,35 +47,22 @@ fn setup_palette(mut commands: Commands) {
             },
             ..default()
         },
-    )).id();
-
-    fn get_section(text: impl Into<String>) -> TextSection {
-        TextSection {
-            value: text.into(),
-            style: TextStyle {
-                font_size: 16.0,
-                color: Color::WHITE,
+    )).with_children(|parent| {
+        parent.spawn((
+            PaletteText,
+            TextBundle {
+                text: Text::from_sections([
+                    get_section("Drawing: "),
+                    {
+                        let mut sec = get_section(INITIAL_PARTICLE_TO_DRAW.name());
+                        sec.style.color = get_color(&INITIAL_PARTICLE_TO_DRAW);
+                        sec
+                    },
+                ]),
                 ..default()
-            },
-        }
-    }
-
-    let palette_text = commands.spawn((
-        PaletteText,
-        TextBundle {
-            text: Text::from_sections([
-                get_section("Drawing: "),
-                {
-                    let mut sec = get_section(INITIAL_PARTICLE_TO_DRAW.name());
-                    sec.style.color = get_color(&INITIAL_PARTICLE_TO_DRAW);
-                    sec
-                },
-            ]),
-            ..default()
-        }
-    )).id();
-
-    commands.entity(palette_root).add_child(palette_text);
+            }
+        ));
+    });
 }
 
 fn setup_particle_to_draw(mut commands: Commands) {
