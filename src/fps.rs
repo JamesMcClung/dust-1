@@ -12,7 +12,7 @@ impl Plugin for FpsPlugin {
         app.add_systems(Startup, setup_fps_display);
         app.add_systems(Update, (
             update_fps_display,
-            fps_counter_showhide,
+            toggle_fps_display_visibility,
         ));
     }
 }
@@ -116,14 +116,13 @@ fn interpolate_color(
     }
 }
 
-/// Toggle the FPS counter when pressing F12
-fn fps_counter_showhide(
-    mut q: Query<&mut Visibility, With<FpsRoot>>,
-    kbd: Res<ButtonInput<KeyCode>>,
+fn toggle_fps_display_visibility(
+    mut visibility: Query<&mut Visibility, With<FpsRoot>>,
+    keys: Res<ButtonInput<KeyCode>>,
 ) {
-    if kbd.just_pressed(KeyCode::F12) {
-        let mut vis = q.single_mut();
-        *vis = match *vis {
+    if keys.just_pressed(KeyCode::F12) {
+        let mut visibility = visibility.single_mut();
+        *visibility = match *visibility {
             Visibility::Hidden => Visibility::Visible,
             _ => Visibility::Hidden,
         };
