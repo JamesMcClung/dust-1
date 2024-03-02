@@ -11,7 +11,7 @@ impl Plugin for FpsPlugin {
         app.add_plugins(FrameTimeDiagnosticsPlugin::default());
         app.add_systems(Startup, setup_fps_counter);
         app.add_systems(Update, (
-            fps_text_update_system,
+            update_fps_display,
             fps_counter_showhide,
         ));
     }
@@ -81,50 +81,38 @@ fn setup_fps_counter(
     commands.entity(root).push_children(&[text_fps]);
 }
 
-fn fps_text_update_system(
+fn update_fps_display(
     diagnostics: Res<DiagnosticsStore>,
-    mut query: Query<&mut Text, With<FpsText>>,
+    mut text: Query<&mut Text, With<FpsText>>,
 ) {
-    for mut text in &mut query {
-        // try to get a "smoothed" FPS value from Bevy
-        if let Some(value) = diagnostics
-            .get(&FrameTimeDiagnosticsPlugin::FPS)
-            .and_then(|fps| fps.smoothed())
-        {
-            // Format the number as to leave space for 4 digits, just in case,
-            // right-aligned and rounded. This helps readability when the
-            // number changes rapidly.
-            text.sections[1].value = format!("{value:>4.0}");
+    let mut text = text.single_mut();
+    
+    if let Some(value) = diagnostics
+        .get(&FrameTimeDiagnosticsPlugin::FPS)
+        .and_then(|fps| fps.smoothed())
+    {
+        text.sections[1].value = format!("{value:>4.0}");
 
-            // Let's make it extra fancy by changing the color of the
-            // text according to the FPS value:
-            text.sections[1].style.color = if value >= 120.0 {
-                // Above 120 FPS, use green color
-                Color::rgb(0.0, 1.0, 0.0)
-            } else if value >= 60.0 {
-                // Between 60-120 FPS, gradually transition from yellow to green
-                Color::rgb(
-                    (1.0 - (value - 60.0) / (120.0 - 60.0)) as f32,
-                    1.0,
-                    0.0,
-                )
-            } else if value >= 30.0 {
-                // Between 30-60 FPS, gradually transition from red to yellow
-                Color::rgb(
-                    1.0,
-                    ((value - 30.0) / (60.0 - 30.0)) as f32,
-                    0.0,
-                )
-            } else {
-                // Below 30 FPS, use red color
-                Color::rgb(1.0, 0.0, 0.0)
-            }
+        text.sections[1].style.color = if value >= 120.0 {
+            Color::rgb(0.0, 1.0, 0.0)
+        } else if value >= 60.0 {
+            Color::rgb(
+                (1.0 - (value - 60.0) / (120.0 - 60.0)) as f32,
+                1.0,
+                0.0,
+            )
+        } else if value >= 30.0 {
+            Color::rgb(
+                1.0,
+                ((value - 30.0) / (60.0 - 30.0)) as f32,
+                0.0,
+            )
         } else {
-            // display "N/A" if we can't get a FPS measurement
-            // add an extra space to preserve alignment
-            text.sections[1].value = " N/A".into();
-            text.sections[1].style.color = Color::WHITE;
+            Color::rgb(1.0, 0.0, 0.0)
         }
+    } else {
+        text.sections[1].value = " N/A".into();
+        text.sections[1].style.color = Color::WHITE;
     }
 }
 
