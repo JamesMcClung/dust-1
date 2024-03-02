@@ -92,27 +92,35 @@ fn update_fps_display(
         .and_then(|fps| fps.smoothed())
     {
         text.sections[1].value = format!("{value:>4.0}");
-
-        text.sections[1].style.color = if value >= 120.0 {
-            Color::rgb(0.0, 1.0, 0.0)
-        } else if value >= 60.0 {
-            Color::rgb(
-                (1.0 - (value - 60.0) / (120.0 - 60.0)) as f32,
-                1.0,
-                0.0,
-            )
-        } else if value >= 30.0 {
-            Color::rgb(
-                1.0,
-                ((value - 30.0) / (60.0 - 30.0)) as f32,
-                0.0,
-            )
-        } else {
-            Color::rgb(1.0, 0.0, 0.0)
-        }
+        text.sections[1].style.color = interpolate_color(value as f32, 120.0, 60.0, 30.0);
     } else {
         text.sections[1].value = " N/A".into();
         text.sections[1].style.color = Color::WHITE;
+    }
+}
+
+fn interpolate_color(
+    value: f32,
+    g_threshold: f32,
+    y_threshold: f32,
+    r_threshold: f32,
+) -> Color {
+    if value >= g_threshold {
+        Color::rgb(0.0, 1.0, 0.0)
+    } else if value >= y_threshold {
+        Color::rgb(
+            (1.0 - (value - 60.0) / (120.0 - 60.0)) as f32,
+            1.0,
+            0.0,
+        )
+    } else if value >= r_threshold {
+        Color::rgb(
+            1.0,
+            ((value - 30.0) / (60.0 - 30.0)) as f32,
+            0.0,
+        )
+    } else {
+        Color::rgb(1.0, 0.0, 0.0)
     }
 }
 
