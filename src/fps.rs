@@ -9,7 +9,7 @@ pub struct FpsPlugin;
 impl Plugin for FpsPlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-        app.add_systems(Startup, setup_fps_counter);
+        app.add_systems(Startup, setup_fps_display);
         app.add_systems(Update, (
             update_fps_display,
             fps_counter_showhide,
@@ -17,11 +17,9 @@ impl Plugin for FpsPlugin {
     }
 }
 
-/// Marker to find the container entity so we can show/hide the FPS counter
 #[derive(Component)]
 struct FpsRoot;
 
-/// Marker to find the text entity so we can update it
 #[derive(Component)]
 struct FpsText;
 
@@ -30,34 +28,22 @@ const FPS_INDEX: usize = 1;
 
 const DEFAULT_COLOR: Color = Color::WHITE;
 
-fn setup_fps_counter(
+fn setup_fps_display(
     mut commands: Commands,
 ) {
-    // create our UI root node
-    // this is the wrapper/container for the text
-    let root = commands.spawn((
+    let fps_root = commands.spawn((
         FpsRoot,
         NodeBundle {
-            // give it a dark background for readability
             background_color: BackgroundColor(Color::BLACK.with_a(0.5)),
-            // make it "always on top" by setting the Z index to maximum
-            // we want it to be displayed over all other UI
             z_index: ZIndex::Global(i32::MAX),
             style: Style {
                 position_type: PositionType::Absolute,
-                // position it at the top-right corner
-                // 1% away from the top window edge
-                right: Val::Percent(1.),
-                top: Val::Percent(1.),
-                // set bottom/left to Auto, so it can be
-                // automatically sized depending on the text
-                bottom: Val::Auto,
-                left: Val::Auto,
-                // give it some padding for readability
+                right: Val::Percent(1.0),
+                top: Val::Percent(1.0),
                 padding: UiRect::all(Val::Px(4.0)),
-                ..Default::default()
+                ..default()
             },
-            ..Default::default()
+            ..default()
         },
     )).id();
 
@@ -67,7 +53,7 @@ fn setup_fps_counter(
         ..default()
     };
 
-    let text_fps = commands.spawn((
+    let fps_text = commands.spawn((
         FpsText,
         TextBundle {
             text: Text::from_sections([
@@ -80,10 +66,11 @@ fn setup_fps_counter(
                     style: style.clone(),
                 },
             ]),
-            ..Default::default()
+            ..default()
         },
     )).id();
-    commands.entity(root).push_children(&[text_fps]);
+
+    commands.entity(fps_root).push_children(&[fps_text]);
 }
 
 fn update_fps_display(
