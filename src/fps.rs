@@ -25,6 +25,11 @@ struct FpsRoot;
 #[derive(Component)]
 struct FpsText;
 
+const MISSING_VALUE: &'static str = " N/a"; // the space is for alignment
+const FPS_INDEX: usize = 1;
+
+const DEFAULT_COLOR: Color = Color::WHITE;
+
 fn setup_fps_counter(
     mut commands: Commands,
 ) {
@@ -58,7 +63,7 @@ fn setup_fps_counter(
 
     let style = TextStyle {
         font_size: 16.0,
-        color: Color::WHITE,
+        color: DEFAULT_COLOR,
         ..default()
     };
 
@@ -71,7 +76,7 @@ fn setup_fps_counter(
                     style: style.clone(),
                 },
                 TextSection {
-                    value: " N/A".into(),
+                    value: MISSING_VALUE.into(),
                     style: style.clone(),
                 },
             ]),
@@ -91,11 +96,11 @@ fn update_fps_display(
         .get(&FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.smoothed())
     {
-        text.sections[1].value = format!("{value:>4.0}");
-        text.sections[1].style.color = interpolate_color(value as f32, 120.0, 60.0, 30.0);
+        text.sections[FPS_INDEX].value = format!("{value:>4.0}");
+        text.sections[FPS_INDEX].style.color = interpolate_color(value as f32, 120.0, 60.0, 30.0);
     } else {
-        text.sections[1].value = " N/A".into();
-        text.sections[1].style.color = Color::WHITE;
+        text.sections[FPS_INDEX].value = MISSING_VALUE.into();
+        text.sections[FPS_INDEX].style.color = DEFAULT_COLOR;
     }
 }
 
