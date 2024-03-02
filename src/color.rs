@@ -15,8 +15,6 @@ impl Plugin for ColorPlugin {
 }
 
 
-static VACUUM_COLOR: Color = Color::rgba(0.0, 0.0, 0.0, 0.0);
-
 fn update_colors(
     particle_grid: Query<&PropertyGrid<Particle>>,
     mut coords: Query<(&Coords, &mut Sprite)>,
@@ -29,9 +27,9 @@ fn update_colors(
 
 const MAX_HEAT: Scalar = N_PIXELS.y as Scalar * GasProperties::DEFAULT_MASS * -GRAVITY_ACCELERATION.y;
 
-fn get_color(particle: &Particle) -> Color {
+pub fn get_color(particle: &Particle) -> Color {
     match particle {
-        Particle::Vacuum => VACUUM_COLOR,
+        Particle::Vacuum => Color::rgba(0.0, 0.0, 0.0, 0.0),
         Particle::Air { gas_properties } => {
             let temp_param = sigmoid(gas_properties.temperature() / (GasProperties::DEFAULT_TEMPERATURE + MAX_HEAT / (gas_properties.mass * GasProperties::SPECIFIC_HEAT)) - 0.5);
             Color::rgba(

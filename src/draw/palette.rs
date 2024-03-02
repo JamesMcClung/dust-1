@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::sim::{gas::GasProperties, Particle};
+use crate::color::get_color;
 
 pub struct PalettePlugin;
 
@@ -53,7 +54,11 @@ fn setup_palette(mut commands: Commands) {
         TextBundle {
             text: Text::from_sections([
                 get_section("Drawing: "),
-                get_section(INITIAL_PARTICLE_TO_DRAW.name()),
+                {
+                    let mut sec = get_section(INITIAL_PARTICLE_TO_DRAW.name());
+                    sec.style.color = get_color(&INITIAL_PARTICLE_TO_DRAW);
+                    sec
+                },
             ]),
             ..default()
         }
