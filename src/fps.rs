@@ -1,150 +1,176 @@
 use bevy::prelude::*;
-use bevy::diagnostic::DiagnosticsStore;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-
-// from https://bevy-cheatbook.github.io/cookbook/print-framerate.html
+use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin, SystemInformationDiagnosticsPlugin};
 
 pub struct FpsPlugin;
 
 impl Plugin for FpsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FrameTimeDiagnosticsPlugin::default());
-        app.add_systems(Startup, setup_fps_counter);
+        app.add_plugins(FrameTimeDiagnosticsPlugin);
+        app.add_plugins(SystemInformationDiagnosticsPlugin);
+        app.add_systems(Startup, setup_fps_display);
         app.add_systems(Update, (
-            fps_text_update_system,
-            fps_counter_showhide,
+            update_fps_display,
+            toggle_fps_display_visibility,
         ));
     }
 }
 
-/// Marker to find the container entity so we can show/hide the FPS counter
 #[derive(Component)]
 struct FpsRoot;
 
-/// Marker to find the text entity so we can update it
 #[derive(Component)]
 struct FpsText;
 
-fn setup_fps_counter(
+#[derive(Component)]
+struct LastCpuUsage(Option<f64>);
+
+const MISSING_VALUE: &'static str = "N/a";
+const FPS_INDEX: usize = 1;
+const CPU_INDEX: usize = 3;
+const MEM_INDEX: usize = 5;
+
+const DEFAULT_COLOR: Color = Color::WHITE;
+
+fn setup_fps_display(
     mut commands: Commands,
 ) {
-    // create our UI root node
-    // this is the wrapper/container for the text
-    let root = commands.spawn((
+    commands.spawn(LastCpuUsage(None));
+    
+    let fps_root = commands.spawn((
         FpsRoot,
         NodeBundle {
-            // give it a dark background for readability
             background_color: BackgroundColor(Color::BLACK.with_a(0.5)),
-            // make it "always on top" by setting the Z index to maximum
-            // we want it to be displayed over all other UI
             z_index: ZIndex::Global(i32::MAX),
             style: Style {
                 position_type: PositionType::Absolute,
-                // position it at the top-right corner
-                // 1% away from the top window edge
-                right: Val::Percent(1.),
-                top: Val::Percent(1.),
-                // set bottom/left to Auto, so it can be
-                // automatically sized depending on the text
-                bottom: Val::Auto,
-                left: Val::Auto,
-                // give it some padding for readability
+                right: Val::Percent(1.0),
+                top: Val::Percent(1.0),
                 padding: UiRect::all(Val::Px(4.0)),
-                ..Default::default()
+                ..default()
             },
-            ..Default::default()
+            ..default()
         },
     )).id();
-    // create our text
-    let text_fps = commands.spawn((
+
+    let style = TextStyle {
+        font_size: 16.0,
+        color: DEFAULT_COLOR,
+        ..default()
+    };
+
+    let fps_text = commands.spawn((
         FpsText,
         TextBundle {
-            // use two sections, so it is easy to update just the number
             text: Text::from_sections([
                 TextSection {
                     value: "FPS: ".into(),
-                    style: TextStyle {
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                        // if you want to use your game's font asset,
-                        // uncomment this and provide the handle:
-                        // font: my_font_handle
-                        ..default()
-                    }
+                    style: style.clone(),
                 },
                 TextSection {
-                    value: " N/A".into(),
-                    style: TextStyle {
-                        font_size: 16.0,
-                        color: Color::WHITE,
-                        // if you want to use your game's font asset,
-                        // uncomment this and provide the handle:
-                        // font: my_font_handle
-                        ..default()
-                    }
+                    value: MISSING_VALUE.into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: "\nCPU: ".into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: MISSING_VALUE.into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: "\nMEM: ".into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: MISSING_VALUE.into(),
+                    style: style.clone(),
                 },
             ]),
-            ..Default::default()
+            ..default()
         },
     )).id();
-    commands.entity(root).push_children(&[text_fps]);
+
+    commands.entity(fps_root).push_children(&[fps_text]);
 }
 
-fn fps_text_update_system(
+fn update_fps_display(
     diagnostics: Res<DiagnosticsStore>,
-    mut query: Query<&mut Text, With<FpsText>>,
+    mut last_cpu_usage: Query<&mut LastCpuUsage>,
+    mut text: Query<&mut Text, With<FpsText>>,
 ) {
-    for mut text in &mut query {
-        // try to get a "smoothed" FPS value from Bevy
-        if let Some(value) = diagnostics
-            .get(&FrameTimeDiagnosticsPlugin::FPS)
-            .and_then(|fps| fps.smoothed())
-        {
-            // Format the number as to leave space for 4 digits, just in case,
-            // right-aligned and rounded. This helps readability when the
-            // number changes rapidly.
-            text.sections[1].value = format!("{value:>4.0}");
+    let mut last_cpu_usage = last_cpu_usage.single_mut();
+    let mut text = text.single_mut();
+    
+    if let Some(fps) = diagnostics
+        .get(&FrameTimeDiagnosticsPlugin::FPS)
+        .and_then(|fps| fps.smoothed())
+    {
+        text.sections[FPS_INDEX].value = format!("{fps:>4.0}");
+        text.sections[FPS_INDEX].style.color = interpolate_color(fps as f32, 120.0, 60.0, 30.0);
+    } else {
+        text.sections[FPS_INDEX].value = MISSING_VALUE.into();
+        text.sections[FPS_INDEX].style.color = DEFAULT_COLOR;
+    }
 
-            // Let's make it extra fancy by changing the color of the
-            // text according to the FPS value:
-            text.sections[1].style.color = if value >= 120.0 {
-                // Above 120 FPS, use green color
-                Color::rgb(0.0, 1.0, 0.0)
-            } else if value >= 60.0 {
-                // Between 60-120 FPS, gradually transition from yellow to green
-                Color::rgb(
-                    (1.0 - (value - 60.0) / (120.0 - 60.0)) as f32,
-                    1.0,
-                    0.0,
-                )
-            } else if value >= 30.0 {
-                // Between 30-60 FPS, gradually transition from red to yellow
-                Color::rgb(
-                    1.0,
-                    ((value - 30.0) / (60.0 - 30.0)) as f32,
-                    0.0,
-                )
-            } else {
-                // Below 30 FPS, use red color
-                Color::rgb(1.0, 0.0, 0.0)
-            }
-        } else {
-            // display "N/A" if we can't get a FPS measurement
-            // add an extra space to preserve alignment
-            text.sections[1].value = " N/A".into();
-            text.sections[1].style.color = Color::WHITE;
-        }
+    if let Some(cpu) = diagnostics
+        .get(&SystemInformationDiagnosticsPlugin::CPU_USAGE)
+        .and_then(|cpu| cpu.value())
+        .filter(|x| x.is_finite())
+        .or(last_cpu_usage.0)
+    {
+        text.sections[CPU_INDEX].value = format!("{cpu:>4.0}%");
+        text.sections[CPU_INDEX].style.color = interpolate_color(-cpu as f32, -30.0, -60.0, -100.0);
+        last_cpu_usage.0 = Some(cpu);
+    } else {
+        text.sections[CPU_INDEX].value = MISSING_VALUE.into();
+        text.sections[CPU_INDEX].style.color = DEFAULT_COLOR;
+    }
+
+    if let Some(mem) = diagnostics
+        .get(&SystemInformationDiagnosticsPlugin::MEM_USAGE)
+        .and_then(|mem| mem.value())
+    {
+        text.sections[MEM_INDEX].value = format!("{mem:>4.1}%");
+        text.sections[MEM_INDEX].style.color = interpolate_color(-mem as f32, -30.0, -60.0, -100.0);
+    } else {
+        text.sections[MEM_INDEX].value = MISSING_VALUE.into();
+        text.sections[MEM_INDEX].style.color = DEFAULT_COLOR;
     }
 }
 
-/// Toggle the FPS counter when pressing F12
-fn fps_counter_showhide(
-    mut q: Query<&mut Visibility, With<FpsRoot>>,
-    kbd: Res<ButtonInput<KeyCode>>,
+fn interpolate_color(
+    value: f32,
+    g_threshold: f32,
+    y_threshold: f32,
+    r_threshold: f32,
+) -> Color {
+    if value >= g_threshold {
+        Color::rgb(0.0, 1.0, 0.0)
+    } else if value >= y_threshold {
+        Color::rgb(
+            (1.0 - (value - 60.0) / (120.0 - 60.0)) as f32,
+            1.0,
+            0.0,
+        )
+    } else if value >= r_threshold {
+        Color::rgb(
+            1.0,
+            ((value - 30.0) / (60.0 - 30.0)) as f32,
+            0.0,
+        )
+    } else {
+        Color::rgb(1.0, 0.0, 0.0)
+    }
+}
+
+fn toggle_fps_display_visibility(
+    mut visibility: Query<&mut Visibility, With<FpsRoot>>,
+    keys: Res<ButtonInput<KeyCode>>,
 ) {
-    if kbd.just_pressed(KeyCode::F12) {
-        let mut vis = q.single_mut();
-        *vis = match *vis {
+    if keys.just_pressed(KeyCode::F12) {
+        let mut visibility = visibility.single_mut();
+        *visibility = match *visibility {
             Visibility::Hidden => Visibility::Visible,
             _ => Visibility::Hidden,
         };
