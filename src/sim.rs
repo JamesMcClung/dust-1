@@ -1,9 +1,9 @@
 pub mod gas;
-mod gravity;
+pub mod gravity;
 mod particle;
-mod path;
+pub mod path;
 mod property_grid;
-mod types;
+pub mod types;
 mod coords;
 
 
@@ -22,6 +22,10 @@ pub const GRID_CORNER: Vec2 = Vec2::new(
     PIXEL_SIZE.x / 2.0 - PIXEL_SIZE.x * N_PIXELS.x as f32 / 2.0,
     PIXEL_SIZE.y / 2.0 - PIXEL_SIZE.y * N_PIXELS.y as f32 / 2.0,
 );
+
+/// Maximum number of neighbors possible given the grid topology,
+/// where a "neighbor" is a cell sharing an edge with a given cell
+pub const MAX_NEIGHBORS: usize = 4;
 
 pub struct SimPlugin;
 

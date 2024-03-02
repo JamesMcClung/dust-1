@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::types::{Scalar, Vector};
+use crate::zero::Zero;
 use super::{Coords, N_PIXELS};
 
 #[derive(Component)]
@@ -37,7 +37,8 @@ impl<T> PropertyGrid<T> {
     }
 
     pub fn try_get_mut(&mut self, coords: impl TryInto<Coords>) -> Option<&mut T> {
-        Some(self.get_mut(coords.try_into().ok()?))
+        let coords: Coords = coords.try_into().ok()?;
+        self.arr.get_mut(coords.x)?.get_mut(coords.y)
     }
 
     pub fn swap(&mut self, coords: Coords, mut val: T) -> T {
@@ -62,20 +63,8 @@ impl<T: Default> Default for PropertyGrid<T> {
     }
 }
 
-impl<T: Copy> PropertyGrid<T> {
-    fn of(val: T) -> Self {
-        Self::new(|_| val.clone())
-    }
-}
-
-impl PropertyGrid<Scalar> {
-    pub fn zero() -> Self {
-        Self::of(0.0)
-    }
-}
-
-impl PropertyGrid<Vector> {
-    pub fn zero() -> Self {
-        Self::of(Vector::ZERO)
+impl<T: Zero> Zero for PropertyGrid<T> {
+    fn zero() -> Self {
+        Self::new(|_| T::zero())
     }
 }

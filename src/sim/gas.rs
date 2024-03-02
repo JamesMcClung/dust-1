@@ -1,9 +1,14 @@
+mod gas_properties;
+
 use bevy::prelude::*;
 
 use super::{Coords, Particle, PropertyGrid, RelCoords};
 use super::types::{Scalar, Vector};
 use crate::schedule::SimSet;
+use crate::zero::Zero;
 use super::path;
+
+pub use gas_properties::GasProperties;
 
 pub struct GasPlugin;
 
@@ -13,33 +18,8 @@ impl Plugin for GasPlugin {
     }
 }
 
-pub struct GasProperties {
-    pub mass: Scalar,
-    pub momentum: Vector,
-    internal_position: Vector,
-}
 
-impl Default for GasProperties {
-    fn default() -> Self {
-        Self {
-            mass: NORMAL_GAS_DENSITY,
-            momentum: Vector::ZERO,
-            internal_position: Vector::new(0.5, 0.5),
-        }
-    }
-}
-
-impl GasProperties {
-    fn merge(&mut self, other: Self) {
-        self.momentum += other.momentum;
-        self.internal_position = (self.internal_position * self.mass + other.internal_position * other.mass) / (self.mass + other.mass);
-        self.mass += other.mass;
-    }
-}
-
-pub const NORMAL_GAS_DENSITY: Scalar = 100.0;
-
-const DISPERSION_RATE: f32 = 1.0;
+// const MINIMUM_DISPERSION_MASS: Scalar = GasProperties::DEFAULT_MASS * 0.4;
 const MINIMUM_DISPERSION_MASS: Scalar = 1e-3;
 
 /// Air disperses to orthogonally adjacent `Vacuum` and `Air` cells.
@@ -51,53 +31,42 @@ const MINIMUM_DISPERSION_MASS: Scalar = 1e-3;
 fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let mut particles = particles.single_mut();
 
-    let mut mass_deltas = PropertyGrid::<Scalar>::zero();
-    let mut momentum_deltas = PropertyGrid::<Vector>::zero();
-    let neighbor_deltas = [RelCoords::new(-1, 0), RelCoords::new(1, 0), RelCoords::new(0, -1), RelCoords::new(0, 1)];
-    let max_recipients = neighbor_deltas.len() as Scalar + 1.0;
+    let mut prop_deltas = PropertyGrid::<GasProperties>::zero();
+    let dirs = [RelCoords::new(-1, 0), RelCoords::new(1, 0), RelCoords::new(0, -1), RelCoords::new(0, 1)];
 
     for coords in particles.coords() {
         if let Particle::Air { gas_properties } = particles.get(coords) {
             if gas_properties.mass < MINIMUM_DISPERSION_MASS {
                 continue;
             }
-            
-            let mut n_neighbor_recipients = 0.0;
-            for delta in neighbor_deltas {
-                if matches!(particles.try_get(coords + delta), Some(Particle::Air {..} | Particle::Vacuum)) {
-                    n_neighbor_recipients += 1.0;
+
+            let mut neighbor_dirs = vec![];
+            for dir in dirs {
+                match particles.try_get(coords + dir) {
+                    Some(
+                        | Particle::Vacuum
+                        | Particle::Air { .. }
+                    ) => neighbor_dirs.push(dir),
+                    _ => ()
                 }
             }
-
-            let dispersed_mass = gas_properties.mass * DISPERSION_RATE;
-            let dispersed_momentum = gas_properties.momentum * DISPERSION_RATE;
-
-            *mass_deltas.get_mut(coords) -= dispersed_mass * n_neighbor_recipients / max_recipients;
-            *momentum_deltas.get_mut(coords) -= dispersed_momentum * n_neighbor_recipients / max_recipients;
             
-            for delta in neighbor_deltas {
-                let neighbor = coords + delta;
-                if matches!(particles.try_get(neighbor), Some(Particle::Air {..} | Particle::Vacuum)) {
-                    *mass_deltas.try_get_mut(neighbor).unwrap() += dispersed_mass / max_recipients;
-                    *momentum_deltas.try_get_mut(neighbor).unwrap() += dispersed_momentum / max_recipients;
-                }
+            let Particle::Air { gas_properties } = particles.get_mut(coords) else { panic!() };
+            let dispersed_props = gas_properties.disperse(neighbor_dirs.iter().map(|dir| Vector::from(*dir)).collect());
+            for (dir, props) in std::iter::zip(neighbor_dirs, dispersed_props) {
+                prop_deltas.try_get_mut(coords + dir).unwrap().merge(props);
             }
         }
     }
 
     for coords in particles.coords() {
-        if *mass_deltas.get(coords) != 0.0 {
-            if let Particle::Air { gas_properties } = particles.get_mut(coords) {
-                gas_properties.mass += mass_deltas.get(coords);
-                gas_properties.momentum += *momentum_deltas.get(coords);
-            } else {
-                *particles.get_mut(coords) = Particle::Air {
-                    gas_properties: GasProperties {
-                        mass: *mass_deltas.get(coords),
-                        momentum: *momentum_deltas.get(coords),
-                        ..default()
-                    },
-                };
+        let prop_deltas = prop_deltas.get(coords);
+        if prop_deltas.mass != 0.0 {
+            match particles.get_mut(coords) {
+                Particle::Air { gas_properties } => gas_properties.merge(*prop_deltas),
+                p @ Particle::Vacuum => *p = Particle::Air {
+                    gas_properties: *prop_deltas,
+                },
             }
         }
     }
@@ -109,7 +78,7 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
     
     for coords in particles.coords() {
         if let Particle::Air { gas_properties } = particles.get(coords) {
-            let velocity = gas_properties.momentum / gas_properties.mass;
+            let velocity = gas_properties.velocity();
             let new_pos = gas_properties.internal_position + velocity;
 
             if 0.0 <= new_pos.x && new_pos.x < 1.0
