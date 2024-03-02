@@ -12,12 +12,7 @@ pub struct GasProperties {
 
 impl Default for GasProperties {
     fn default() -> Self {
-        Self {
-            mass: Self::DEFAULT_MASS,
-            momentum: Vector::ZERO,
-            heat: Self::DEFAULT_TEMPERATURE * Self::DEFAULT_MASS * Self::SPECIFIC_HEAT,
-            internal_position: Vector::new(0.5, 0.5),
-        }
+        Self::DEFAULT
     }
 }
 
@@ -35,6 +30,13 @@ impl Zero for GasProperties {
 impl GasProperties {
     pub const DEFAULT_MASS: Scalar = 100.0;
     pub const DEFAULT_TEMPERATURE: Scalar = 1.0;
+
+    pub const DEFAULT: Self = Self {
+        mass: Self::DEFAULT_MASS,
+        momentum: Vector::ZERO,
+        heat: Self::DEFAULT_TEMPERATURE * Self::DEFAULT_MASS * Self::SPECIFIC_HEAT,
+        internal_position: Vector::new(0.5, 0.5),
+    };
 
     const DISPERSION_RATE: f32 = 1.0;
     pub const SPECIFIC_HEAT: Scalar = 1e-3;
