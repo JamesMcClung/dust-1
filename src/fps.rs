@@ -1,14 +1,12 @@
 use bevy::prelude::*;
-use bevy::diagnostic::DiagnosticsStore;
-use bevy::diagnostic::FrameTimeDiagnosticsPlugin;
-
-// from https://bevy-cheatbook.github.io/cookbook/print-framerate.html
+use bevy::diagnostic::{DiagnosticsStore, FrameTimeDiagnosticsPlugin, SystemInformationDiagnosticsPlugin};
 
 pub struct FpsPlugin;
 
 impl Plugin for FpsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(FrameTimeDiagnosticsPlugin::default());
+        app.add_plugins(FrameTimeDiagnosticsPlugin);
+        app.add_plugins(SystemInformationDiagnosticsPlugin);
         app.add_systems(Startup, setup_fps_display);
         app.add_systems(Update, (
             update_fps_display,
@@ -23,14 +21,21 @@ struct FpsRoot;
 #[derive(Component)]
 struct FpsText;
 
+#[derive(Component)]
+struct LastCpuUsage(Option<f64>);
+
 const MISSING_VALUE: &'static str = "N/a";
 const FPS_INDEX: usize = 1;
+const CPU_INDEX: usize = 3;
+const MEM_INDEX: usize = 5;
 
 const DEFAULT_COLOR: Color = Color::WHITE;
 
 fn setup_fps_display(
     mut commands: Commands,
 ) {
+    commands.spawn(LastCpuUsage(None));
+    
     let fps_root = commands.spawn((
         FpsRoot,
         NodeBundle {
@@ -65,6 +70,22 @@ fn setup_fps_display(
                     value: MISSING_VALUE.into(),
                     style: style.clone(),
                 },
+                TextSection {
+                    value: "\nCPU: ".into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: MISSING_VALUE.into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: "\nMEM: ".into(),
+                    style: style.clone(),
+                },
+                TextSection {
+                    value: MISSING_VALUE.into(),
+                    style: style.clone(),
+                },
             ]),
             ..default()
         },
@@ -75,19 +96,46 @@ fn setup_fps_display(
 
 fn update_fps_display(
     diagnostics: Res<DiagnosticsStore>,
+    mut last_cpu_usage: Query<&mut LastCpuUsage>,
     mut text: Query<&mut Text, With<FpsText>>,
 ) {
+    let mut last_cpu_usage = last_cpu_usage.single_mut();
     let mut text = text.single_mut();
     
-    if let Some(value) = diagnostics
+    if let Some(fps) = diagnostics
         .get(&FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.smoothed())
     {
-        text.sections[FPS_INDEX].value = format!("{value:>3.0}");
-        text.sections[FPS_INDEX].style.color = interpolate_color(value as f32, 120.0, 60.0, 30.0);
+        text.sections[FPS_INDEX].value = format!("{fps:>4.0}");
+        text.sections[FPS_INDEX].style.color = interpolate_color(fps as f32, 120.0, 60.0, 30.0);
     } else {
         text.sections[FPS_INDEX].value = MISSING_VALUE.into();
         text.sections[FPS_INDEX].style.color = DEFAULT_COLOR;
+    }
+
+    if let Some(cpu) = diagnostics
+        .get(&SystemInformationDiagnosticsPlugin::CPU_USAGE)
+        .and_then(|cpu| cpu.value())
+        .filter(|x| x.is_finite())
+        .or(last_cpu_usage.0)
+    {
+        text.sections[CPU_INDEX].value = format!("{cpu:>4.0}%");
+        text.sections[CPU_INDEX].style.color = interpolate_color(-cpu as f32, -30.0, -60.0, -100.0);
+        last_cpu_usage.0 = Some(cpu);
+    } else {
+        text.sections[CPU_INDEX].value = MISSING_VALUE.into();
+        text.sections[CPU_INDEX].style.color = DEFAULT_COLOR;
+    }
+
+    if let Some(mem) = diagnostics
+        .get(&SystemInformationDiagnosticsPlugin::MEM_USAGE)
+        .and_then(|mem| mem.value())
+    {
+        text.sections[MEM_INDEX].value = format!("{mem:>4.1}%");
+        text.sections[MEM_INDEX].style.color = interpolate_color(-mem as f32, -30.0, -60.0, -100.0);
+    } else {
+        text.sections[MEM_INDEX].value = MISSING_VALUE.into();
+        text.sections[MEM_INDEX].style.color = DEFAULT_COLOR;
     }
 }
 
