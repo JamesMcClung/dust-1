@@ -25,7 +25,7 @@ struct FpsRoot;
 #[derive(Component)]
 struct FpsText;
 
-const MISSING_VALUE: &'static str = " N/a"; // the space is for alignment
+const MISSING_VALUE: &'static str = "N/a";
 const FPS_INDEX: usize = 1;
 
 const DEFAULT_COLOR: Color = Color::WHITE;
@@ -96,7 +96,7 @@ fn update_fps_display(
         .get(&FrameTimeDiagnosticsPlugin::FPS)
         .and_then(|fps| fps.smoothed())
     {
-        text.sections[FPS_INDEX].value = format!("{value:>4.0}");
+        text.sections[FPS_INDEX].value = format!("{value:>3.0}");
         text.sections[FPS_INDEX].style.color = interpolate_color(value as f32, 120.0, 60.0, 30.0);
     } else {
         text.sections[FPS_INDEX].value = MISSING_VALUE.into();
