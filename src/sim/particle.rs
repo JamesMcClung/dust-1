@@ -1,9 +1,9 @@
-use super::gas::GasDensityType;
+use super::gas::GasProperties;
 
 pub enum Particle {
     Vacuum,
     Air {
-        density: GasDensityType,
+        gas_properties: GasProperties,
     },
 }
 

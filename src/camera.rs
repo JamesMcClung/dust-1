@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::sim::{ParticleCoords, GRID_CORNER, N_PIXELS, PIXEL_SIZE};
+use crate::sim::{GRID_CORNER, N_PIXELS, PIXEL_SIZE, Coords};
 
 pub struct CameraPlugin;
 
@@ -24,7 +24,7 @@ pub fn window_to_camera(window_pos: Vec2, window: &Window, camera: &Transform) -
     *camera * window_pos
 }
 
-pub fn camera_to_grid(camera_pos: Vec3) -> Option<ParticleCoords> {
+pub fn camera_to_grid(camera_pos: Vec3) -> Option<Coords> {
     let grid_x = (camera_pos.x - GRID_CORNER.x) / PIXEL_SIZE.x;
     let grid_y = (camera_pos.y - GRID_CORNER.y) / PIXEL_SIZE.y;
 
@@ -33,11 +33,11 @@ pub fn camera_to_grid(camera_pos: Vec3) -> Option<ParticleCoords> {
     {
         None
     } else {
-        Some(ParticleCoords::new((grid_x + 0.5) as usize, (grid_y + 0.5) as usize))
+        Some(Coords::new((grid_x + 0.5) as usize, (grid_y + 0.5) as usize))
     }
 }
 
-pub fn grid_to_camera(grid_coords: ParticleCoords) -> Vec3 {
+pub fn grid_to_camera(grid_coords: Coords) -> Vec3 {
     Vec3::new(
         GRID_CORNER.x + grid_coords.x as f32 * PIXEL_SIZE.x,
         GRID_CORNER.y + grid_coords.y as f32 * PIXEL_SIZE.y,
