@@ -3,6 +3,7 @@ pub mod gravity;
 pub mod liquid;
 pub mod particle;
 pub mod path;
+pub mod physical_properties;
 mod property_grid;
 pub mod types;
 mod coords;
@@ -15,6 +16,7 @@ use crate::camera::grid_to_camera;
 pub use particle::Particle;
 pub use property_grid::PropertyGrid;
 pub use coords::{Coords, RelCoords};
+pub use physical_properties::PhysicalProperties;
 
 
 pub const N_PIXELS: Coords = Coords::new(128, 128);

@@ -1,14 +1,10 @@
-mod gas_properties;
-
 use bevy::prelude::*;
 
-use super::{Coords, Particle, PropertyGrid, RelCoords};
+use super::{Coords, Particle, PhysicalProperties, PropertyGrid, RelCoords};
 use super::types::{Scalar, Vector};
 use crate::schedule::SimSet;
 use crate::zero::Zero;
 use super::path;
-
-pub use gas_properties::GasProperties;
 
 pub struct GasPlugin;
 
@@ -32,7 +28,7 @@ const MINIMUM_DISPERSION_MASS: Scalar = 1e-3;
 fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let mut particles = particles.single_mut();
 
-    let mut prop_deltas = PropertyGrid::<GasProperties>::zero();
+    let mut prop_deltas = PropertyGrid::<PhysicalProperties>::zero();
     let dirs = [RelCoords::new(-1, 0), RelCoords::new(1, 0), RelCoords::new(0, -1), RelCoords::new(0, 1)];
 
     for coords in particles.coords() {
@@ -76,7 +72,7 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
 
 fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let mut particles = particles.single_mut();
-    let mut moved_gases = Vec::<(Coords, GasProperties)>::new();
+    let mut moved_gases = Vec::<(Coords, PhysicalProperties)>::new();
     
     for coords in particles.coords() {
         if let Particle::Air { gas_properties } = particles.get(coords) {

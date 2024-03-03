@@ -1,16 +1,15 @@
 use bevy::prelude::Component;
 
-use super::gas::GasProperties;
-use super::liquid::LiquidProperties;
+use super::PhysicalProperties;
 
 #[derive(Clone, Copy, Component)]
 pub enum Particle {
     Vacuum,
     Air {
-        gas_properties: GasProperties,
+        gas_properties: PhysicalProperties,
     },
     Water {
-        liquid_properties: LiquidProperties,
+        liquid_properties: PhysicalProperties,
     },
 }
 
@@ -34,4 +33,13 @@ pub mod names {
     pub const VACUUM: &'static str = "Vacuum";
     pub const AIR: &'static str = "Air";
     pub const WATER: &'static str = "Water";
+}
+
+pub mod defualts {
+    use super::Particle;
+    use crate::sim::physical_properties::defaults;
+
+    pub const VACUUM: Particle = Particle::Vacuum;
+    pub const AIR: Particle = Particle::Air { gas_properties: defaults::AIR };
+    pub const WATER: Particle = Particle::Water { liquid_properties: defaults::WATER };
 }

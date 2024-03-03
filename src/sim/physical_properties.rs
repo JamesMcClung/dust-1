@@ -1,64 +1,52 @@
+pub mod calc;
+pub mod defaults;
+
 use crate::sim::types::{Scalar, Vector};
 use crate::sim::MAX_NEIGHBORS;
 use crate::zero::Zero;
 
 #[derive(Clone, Copy, Debug)]
-pub struct GasProperties {
+pub struct PhysicalProperties {
     pub mass: Scalar,
     pub momentum: Vector,
     pub heat: Scalar,
-    pub(super) internal_position: Vector,
+    pub specific_heat: Scalar,
+    pub internal_position: Vector,
 }
 
-impl Default for GasProperties {
-    fn default() -> Self {
-        Self::DEFAULT
-    }
-}
-
-impl Zero for GasProperties {
+impl Zero for PhysicalProperties {
     fn zero() -> Self {
         Self {
             mass: 0.0,
             momentum: Vector::ZERO,
             heat: 0.0,
-            ..Self::default()
+            specific_heat: 0.0,
+            internal_position: Vector::ZERO,
         }
     }
 }
 
-impl GasProperties {
-    pub const DEFAULT_MASS: Scalar = 100.0;
-    pub const DEFAULT_TEMPERATURE: Scalar = 1.0;
-
-    pub const DEFAULT: Self = Self {
-        mass: Self::DEFAULT_MASS,
-        momentum: Vector::ZERO,
-        heat: Self::DEFAULT_TEMPERATURE * Self::DEFAULT_MASS * Self::SPECIFIC_HEAT,
-        internal_position: Vector::new(0.5, 0.5),
-    };
-
-    const DISPERSION_RATE: f32 = 1.0;
-    pub const SPECIFIC_HEAT: Scalar = 1e-3;
-
-    // from an arcane derivation
-    const BOOST_PARAMETER: Scalar = 0.9; // heat is guaranteed to be positive when this is strictly less than 1
-    const BOOST_CONSTANT: Scalar = 2.0 / 14.8323969742; // f32::sqrt((MAX_NEIGHBORS * (MAX_NEIGHBORS + 1) * (2 * MAX_NEIGHBORS + 3)) as f32)
+impl PhysicalProperties {
+    pub const fn new(mass: Scalar, temperature: Scalar, specific_heat: Scalar) -> Self {
+        Self {
+            mass,
+            momentum: Vector::ZERO,
+            heat: calc::heat_const(temperature, mass, specific_heat),
+            specific_heat,
+            internal_position: Vector::new(0.5, 0.5),
+        }
+    }
 
     pub fn velocity(&self) -> Vector {
-        self.momentum / self.mass
+        calc::velocity(self.momentum, self.mass)
     }
 
     pub fn temperature(&self) -> Scalar {
-        self.heat / (self.mass * Self::SPECIFIC_HEAT)
+        calc::temperature(self.heat, self.mass, self.specific_heat)
     }
 
-    fn kinetic_energy(&self) -> Scalar {
-        if self.mass == 0.0 {
-            0.0
-        } else {
-            self.momentum.length_squared() / (2.0 * self.mass)
-        }
+    pub fn kinetic_energy(&self) -> Scalar {
+        calc::kinetic_energy(self.momentum, self.mass)
     }
 
     pub fn merge(&mut self, other: Self) {
@@ -80,6 +68,13 @@ impl GasProperties {
         // it can be shown that ke_before >= ke_after, provided both masses >= 0
         self.heat += other.heat + (ke_before - ke_after);
     }
+
+
+    const DISPERSION_RATE: f32 = 1.0; // between 0 and 1, inclusive
+
+    // from an arcane derivation
+    const BOOST_PARAMETER: Scalar = 0.9; // heat is guaranteed to be positive when this is strictly less than 1
+    const BOOST_CONSTANT: Scalar = 2.0 / 14.8323969742; // f32::sqrt((MAX_NEIGHBORS * (MAX_NEIGHBORS + 1) * (2 * MAX_NEIGHBORS + 3)) as f32)
 
     pub fn disperse(&mut self, dirs: Vec<Vector>) -> Vec<Self> {
         let dispersed_fraction_per_dir = Self::DISPERSION_RATE / (MAX_NEIGHBORS as f32 + 1.0);
@@ -104,14 +99,16 @@ impl GasProperties {
         self.momentum = my_momentum_after;
         self.heat = my_heat_after;
 
-        other_momenta_after.into_iter().map(|other_momentum_after| GasProperties {
+        other_momenta_after.into_iter().map(|other_momentum_after| PhysicalProperties {
             mass: other_mass_after,
             momentum: other_momentum_after,
             heat: other_heat_after,
             internal_position: self.internal_position,
+            specific_heat: self.specific_heat,
         }).collect()
     }
 }
+
 
 #[cfg(test)]
 mod tests {
@@ -123,73 +120,15 @@ mod tests {
     const TEST_MOMENTUM: Vector = Vector::new(3.0 * 4.0 * 5.0, 0.0);
     const TEST_HEAT: Scalar = 3.0 * 4.0 * 5.0;
     const TEST_INTERNAL_POSITION: Vector = Vector::new(0.5, 0.5);
+    const TEST_SPECIFIC_HEAT: Scalar = 1.0;
 
-    fn get_test_properties() -> GasProperties {
-        GasProperties {
+    fn get_test_properties() -> PhysicalProperties {
+        PhysicalProperties {
             mass: TEST_MASS,
             momentum: TEST_MOMENTUM,
             heat: TEST_HEAT,
             internal_position: TEST_INTERNAL_POSITION,
-        }
-    }
-
-    fn disperse_4_ways(gas_properties: &mut GasProperties) -> Vec<GasProperties> {
-        let dirs = [Vector::new(1.0, 0.0), Vector::new(0.0, 1.0), Vector::new(-1.0, 0.0), Vector::new(0.0, -1.0)];
-        gas_properties.disperse(dirs.into())
-    }
-
-    #[test]
-    fn disperse_4_way_mass() {
-        let mut original = get_test_properties();
-        let total_mass_before = original.mass;
-        
-        let disperseds = disperse_4_ways(&mut original);
-        let total_mass_after = original.mass + disperseds.iter().map(|dispersed| dispersed.mass).sum::<Scalar>();
-        
-        assert_f32_near!(total_mass_before, total_mass_after);
-        
-        assert_f32_near!(original.mass, total_mass_after / 5.0);
-        for dispersed in disperseds {
-            assert_f32_near!(dispersed.mass, total_mass_after / 5.0);
-        }
-    }
-
-    #[test]
-    fn disperse_4_way_momentum() {
-        let mut original = get_test_properties();
-        let total_momentum_before = original.momentum;
-        
-        let disperseds = disperse_4_ways(&mut original);
-        let total_momentum_after = original.momentum + disperseds.iter().map(|dispersed| dispersed.momentum).sum::<Vector>();
-        
-        assert_f32_near!(total_momentum_before.x, total_momentum_after.x);
-        assert_f32_near!(total_momentum_before.y, total_momentum_after.y);
-
-        assert_f32_near!(original.momentum.x, total_momentum_before.x / 5.0);
-        assert_f32_near!(original.momentum.y, total_momentum_before.y / 5.0);
-
-        assert_f32_near!(disperseds[0].momentum.y, disperseds[2].momentum.y);
-        assert_f32_near!(disperseds[0].momentum.x + disperseds[2].momentum.x, 2.0 * original.momentum.x);
-        
-        assert_f32_near!(disperseds[1].momentum.x, disperseds[3].momentum.x);
-        assert_f32_near!(disperseds[1].momentum.y + disperseds[3].momentum.y, 2.0 * original.momentum.y);
-    }
-
-    #[test]
-    fn disperse_4_way_heat() {
-        let mut original = get_test_properties();
-        let heat_before = original.heat;
-        let ke_before = original.kinetic_energy();
-
-        let disperseds = disperse_4_ways(&mut original);
-        let heat_after = original.heat + disperseds.iter().map(|dispersed| dispersed.heat).sum::<Scalar>();
-        let ke_after = original.kinetic_energy() + disperseds.iter().map(GasProperties::kinetic_energy).sum::<Scalar>();
-        
-        assert_f32_near!(heat_before + ke_before, heat_after + ke_after);
-
-        assert_f32_near!(original.heat, heat_after / 5.0);
-        for dispersed in disperseds {
-            assert_f32_near!(dispersed.heat, heat_after / 5.0);
+            specific_heat: TEST_SPECIFIC_HEAT,
         }
     }
 
@@ -271,7 +210,7 @@ mod tests {
 
     #[test]
     fn merge_into_zero() {
-        let mut a = GasProperties::zero();
+        let mut a = PhysicalProperties::zero();
         let b = get_test_properties();
 
         a.merge(b);
@@ -287,7 +226,7 @@ mod tests {
     #[test]
     fn merge_from_zero() {
         let mut a = get_test_properties();
-        let b = GasProperties::zero();
+        let b = PhysicalProperties::zero();
 
         a.merge(b);
 
@@ -297,5 +236,67 @@ mod tests {
         assert_f32_near!(a.heat, TEST_HEAT);
         assert_f32_near!(a.internal_position.x, TEST_INTERNAL_POSITION.x);
         assert_f32_near!(a.internal_position.y, TEST_INTERNAL_POSITION.y);
+    }
+
+
+
+    fn disperse_4_ways(gas_properties: &mut PhysicalProperties) -> Vec<PhysicalProperties> {
+        let dirs = [Vector::new(1.0, 0.0), Vector::new(0.0, 1.0), Vector::new(-1.0, 0.0), Vector::new(0.0, -1.0)];
+        gas_properties.disperse(dirs.into())
+    }
+
+    #[test]
+    fn disperse_4_way_mass() {
+        let mut original = get_test_properties();
+        let total_mass_before = original.mass;
+        
+        let disperseds = disperse_4_ways(&mut original);
+        let total_mass_after = original.mass + disperseds.iter().map(|dispersed| dispersed.mass).sum::<Scalar>();
+        
+        assert_f32_near!(total_mass_before, total_mass_after);
+        
+        assert_f32_near!(original.mass, total_mass_after / 5.0);
+        for dispersed in disperseds {
+            assert_f32_near!(dispersed.mass, total_mass_after / 5.0);
+        }
+    }
+
+    #[test]
+    fn disperse_4_way_momentum() {
+        let mut original = get_test_properties();
+        let total_momentum_before = original.momentum;
+        
+        let disperseds = disperse_4_ways(&mut original);
+        let total_momentum_after = original.momentum + disperseds.iter().map(|dispersed| dispersed.momentum).sum::<Vector>();
+        
+        assert_f32_near!(total_momentum_before.x, total_momentum_after.x);
+        assert_f32_near!(total_momentum_before.y, total_momentum_after.y);
+
+        assert_f32_near!(original.momentum.x, total_momentum_before.x / 5.0);
+        assert_f32_near!(original.momentum.y, total_momentum_before.y / 5.0);
+
+        assert_f32_near!(disperseds[0].momentum.y, disperseds[2].momentum.y);
+        assert_f32_near!(disperseds[0].momentum.x + disperseds[2].momentum.x, 2.0 * original.momentum.x);
+        
+        assert_f32_near!(disperseds[1].momentum.x, disperseds[3].momentum.x);
+        assert_f32_near!(disperseds[1].momentum.y + disperseds[3].momentum.y, 2.0 * original.momentum.y);
+    }
+
+    #[test]
+    fn disperse_4_way_heat() {
+        let mut original = get_test_properties();
+        let heat_before = original.heat;
+        let ke_before = original.kinetic_energy();
+
+        let disperseds = disperse_4_ways(&mut original);
+        let heat_after = original.heat + disperseds.iter().map(|dispersed| dispersed.heat).sum::<Scalar>();
+        let ke_after = original.kinetic_energy() + disperseds.iter().map(PhysicalProperties::kinetic_energy).sum::<Scalar>();
+        
+        assert_f32_near!(heat_before + ke_before, heat_after + ke_after);
+
+        assert_f32_near!(original.heat, heat_after / 5.0);
+        for dispersed in disperseds {
+            assert_f32_near!(dispersed.heat, heat_after / 5.0);
+        }
     }
 }

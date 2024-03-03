@@ -1551,6 +1551,7 @@ version = "0.1.0"
 dependencies = [
  "assert_float_eq",
  "bevy",
+ "const_soft_float",
  "rand",
 ]
 
