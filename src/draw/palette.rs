@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::sim::liquid::LiquidProperties;
 use crate::sim::{gas::GasProperties, Particle, particle};
 use crate::color;
 
@@ -101,6 +102,7 @@ fn setup_palette(mut commands: Commands) {
             let elements = [
                 Particle::Vacuum,
                 Particle::Air { gas_properties: default() },
+                Particle::Water { liquid_properties: default() },
             ];
 
             for element in elements {
@@ -197,6 +199,7 @@ fn get_details(particle: &Particle) -> String {
     match particle {
         Particle::Vacuum => "".into(),
         Particle::Air { gas_properties } => gas_property_details(gas_properties),
+        Particle::Water { liquid_properties } => liquid_property_details(liquid_properties),
     }
 }
 
@@ -211,5 +214,11 @@ fn gas_property_details(gas_properties: &GasProperties) -> String {
   - mass:        {mass:5.1} kg
   - velocity:    ({vx:4.2}, {vy:4.2}) m/s
   - temperature: {temperature:5.1} K\
+")
+}
+
+fn liquid_property_details(liquid_properties: &LiquidProperties) -> String {
+    format!("\
+* Liquid Properties\\
 ")
 }

@@ -1,5 +1,6 @@
 pub mod gas;
 pub mod gravity;
+pub mod liquid;
 pub mod particle;
 pub mod path;
 mod property_grid;

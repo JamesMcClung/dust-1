@@ -1,12 +1,16 @@
 use bevy::prelude::Component;
 
 use super::gas::GasProperties;
+use super::liquid::LiquidProperties;
 
 #[derive(Clone, Copy, Component)]
 pub enum Particle {
     Vacuum,
     Air {
         gas_properties: GasProperties,
+    },
+    Water {
+        liquid_properties: LiquidProperties,
     },
 }
 
@@ -21,6 +25,7 @@ impl Particle {
         match self {
             Self::Vacuum => names::VACUUM,
             Self::Air { .. } => names::AIR,
+            Self::Water { .. } => names::WATER,
         }
     }
 }
@@ -28,4 +33,5 @@ impl Particle {
 pub mod names {
     pub const VACUUM: &'static str = "Vacuum";
     pub const AIR: &'static str = "Air";
+    pub const WATER: &'static str = "Water";
 }

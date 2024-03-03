@@ -42,6 +42,9 @@ pub fn get_color(particle: &Particle) -> Color {
                 gas_properties.mass / GasProperties::DEFAULT_MASS,
             )
         },
+        Particle::Water { .. } => {
+            Color::rgba(0.0, 0.8, 0.9, 0.9)
+        }
     }
 }
 

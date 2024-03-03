@@ -21,7 +21,8 @@ fn apply_gravity(mut particles: Query<&mut PropertyGrid<Particle>>) {
             Particle::Vacuum => {},
             Particle::Air { gas_properties } => {
                 gas_properties.momentum += GRAVITY_ACCELERATION * gas_properties.mass; 
-            }
+            },
+            Particle::Water { liquid_properties } => (),
         }
     }
 }

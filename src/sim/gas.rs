@@ -68,6 +68,7 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
                 p @ Particle::Vacuum => *p = Particle::Air {
                     gas_properties: *prop_deltas,
                 },
+                _ => (),
             }
         }
     }
@@ -97,7 +98,7 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                 let next_coords = coords + delta;
 
                 match particles.try_get(next_coords) {
-                    None => {
+                    None | Some(Particle::Water {..}) => {
                         let reflect = RelCoords::ONE - 2 * delta.abs();
                         net_reflect *= reflect;
                     },
@@ -125,6 +126,7 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
         match particles.get_mut(coords) {
             p @ Particle::Vacuum => *p = Particle::Air { gas_properties: moved_gas_properties },
             Particle::Air { gas_properties } => gas_properties.merge(moved_gas_properties),
+            _ => panic!(),
         }
     }
 }
