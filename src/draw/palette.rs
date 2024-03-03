@@ -49,10 +49,12 @@ fn setup_palette(mut commands: Commands) {
                 position_type: PositionType::Absolute,
                 left: Val::Percent(75.0),
                 top: Val::Percent(40.0),
+                width: Val::Px(300.0),
                 padding: UiRect::all(Val::Px(4.0)),
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
+            background_color: BackgroundColor(Color::DARK_GRAY),
             ..default()
         },
     )).with_children(|parent| {
@@ -60,10 +62,10 @@ fn setup_palette(mut commands: Commands) {
             PaletteTitle,
             TextBundle {
                 text: Text::from_sections([
-                    get_section("Drawing: "),
+                    get_section("DRAWING\n"),
                     {
                         let mut sec = get_section(INITIAL_PARTICLE_TO_DRAW.name());
-                        sec.style.color = get_color(&INITIAL_PARTICLE_TO_DRAW);
+                        sec.style.color = get_color(&INITIAL_PARTICLE_TO_DRAW).with_a(1.0);
                         sec
                     },
                 ]),
@@ -74,9 +76,42 @@ fn setup_palette(mut commands: Commands) {
             PaletteDetails,
             TextBundle {
                 text: Text::from_section(get_details(&INITIAL_PARTICLE_TO_DRAW), get_style()),
+                style: Style { margin: UiRect::top(Val::Px(10.0)), ..default() },
                 ..default()
             }
         ));
+        parent.spawn(
+            NodeBundle {
+                style: Style {
+                    display: Display::Grid,
+                    grid_template_columns: RepeatedGridTrack::flex(4, 1.0),
+                    grid_template_rows: RepeatedGridTrack::flex(4, 1.0),
+                    min_width: Val::Percent(100.0),
+                    width: Val::Percent(100.0),
+                    margin: UiRect::top(Val::Px(20.0)),
+                    ..default()
+                },
+                ..default()
+            }
+        ).with_children(|grid| {
+            grid.spawn(TextBundle {
+                text: Text::from_section("ELEMENTS", get_style()),
+                style: Style { grid_column: GridPlacement::span(4), ..default() },
+                ..default()
+            });
+            
+            let elements = [
+                Particle::Vacuum,
+                Particle::Air { gas_properties: default() },
+            ];
+
+            for element in elements {
+                grid.spawn(TextBundle {
+                    text: Text::from_section(element.name(), TextStyle { color: get_color(&element).with_a(1.0), ..get_style() }),
+                    ..default()
+                });
+            }
+        });
     });
 }
 
@@ -98,9 +133,9 @@ fn gas_property_details(gas_properties: &GasProperties) -> String {
     let vy = velocity.y;
     let temperature = gas_properties.temperature();
     format!("\
-GAS PROPERTIES
-  mass:        {mass:5.1} kg
-  velocity:    ({vx:4.2}, {vy:4.2}) m/s
-  temperature: {temperature:5.1} K\
+* Gas Properties
+  - mass:        {mass:5.1} kg
+  - velocity:    ({vx:4.2}, {vy:4.2}) m/s
+  - temperature: {temperature:5.1} K\
 ")
 }
