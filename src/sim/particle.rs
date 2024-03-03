@@ -1,6 +1,8 @@
+use bevy::prelude::Component;
+
 use super::gas::GasProperties;
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Component)]
 pub enum Particle {
     Vacuum,
     Air {

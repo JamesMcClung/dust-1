@@ -27,16 +27,18 @@ fn add_last_cursor_coords(mut commands: Commands) {
 }
 
 fn draw_particle(
+    particle_to_draw: Query<&ParticleToDraw>,
     mut particle_grid: Query<&mut PropertyGrid<Particle>>,
     mut last_cursor_coords: Query<&mut LastCursorCoords>,
-    particle_to_draw: Query<&ParticleToDraw>,
     cursor_input: Res<ButtonInput<MouseButton>>,
     window: Query<&Window>,
     camera: Query<&Transform, With<Camera>>,
 ) {
+    let ParticleToDraw(Some(particle_to_draw)) = particle_to_draw.single() else {
+        return;
+    };
     let mut particle_grid = particle_grid.single_mut();
     let mut last_cursor_coords = last_cursor_coords.single_mut();
-    let particle_to_draw = particle_to_draw.single();
 
     let window = window.single();
     let camera = camera.single();
@@ -48,7 +50,7 @@ fn draw_particle(
 
             for coords in path::get_path(start, end) {
                 if let Some(particle) = particle_grid.try_get_mut(coords) {
-                    *particle = particle_to_draw.0;
+                    *particle = *particle_to_draw;
                 }
             }
 
