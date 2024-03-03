@@ -49,8 +49,8 @@ fn setup_palette(mut commands: Commands) {
         NodeBundle {
             style: Style {
                 position_type: PositionType::Absolute,
-                left: Val::Percent(75.0),
-                top: Val::Percent(40.0),
+                right: Val::Percent(5.0),
+                bottom: Val::Percent(30.0),
                 width: Val::Px(300.0),
                 padding: UiRect::all(Val::Px(4.0)),
                 flex_direction: FlexDirection::Column,
