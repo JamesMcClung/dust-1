@@ -27,9 +27,13 @@ impl Plugin for SchedulePlugin {
             ))
             .configure_sets(
                 Update,
-                (SimSet::Gravity, SimSet::Gas, SimSet::Draw, SimSet::Recolor)
-                    .chain()
-                    .run_if(in_state(SimState::Playing).or_else(in_state(SimState::Stepping)))
+                (
+                    SimSet::Draw,
+                    (SimSet::Gravity, SimSet::Gas)
+                        .chain()
+                        .run_if(in_state(SimState::Playing).or_else(in_state(SimState::Stepping))),
+                    SimSet::Recolor,
+                ).chain()
             )
         ;
     }
