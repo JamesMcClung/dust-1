@@ -26,7 +26,7 @@ struct PaletteDetails;
 #[derive(Component)]
 pub struct ParticleToDraw(pub Option<Particle>);
 
-const INITIAL_PARTICLE_TO_DRAW: Particle = Particle::Air { gas_properties: GasProperties::DEFAULT };
+const INITIAL_PARTICLE_TO_DRAW: &'static str = "Air";
 
 fn get_style() -> TextStyle {
     TextStyle {
@@ -156,7 +156,7 @@ fn select_initial_particle(
     mut buttons: Query<&Particle, With<Button>>,
 ) {
     for particle in &mut buttons {
-        if particle.name() == INITIAL_PARTICLE_TO_DRAW.name() {
+        if particle.name() == INITIAL_PARTICLE_TO_DRAW {
             particle_to_draw.single_mut().0 = Some(*particle);
             return;
         }
