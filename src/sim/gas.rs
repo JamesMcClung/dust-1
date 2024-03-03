@@ -19,13 +19,14 @@ impl Plugin for GasPlugin {
 }
 
 
-// const MINIMUM_DISPERSION_MASS: Scalar = GasProperties::DEFAULT_MASS * 0.4;
 const MINIMUM_DISPERSION_MASS: Scalar = 1e-3;
 
 /// Air disperses to orthogonally adjacent `Vacuum` and `Air` cells.
 /// 
 /// The rate of dispersion is determined by `DISPERSION_RATE`, with 0.0 corresponding to no dispersion and 1.0 corresponding to complete dispersion,
 /// i.e., a cell of gas will evenly spread itself out across itself and its neighbors in a single tick.
+/// 
+/// Dispersion conserves mass, momentum, and total energy, converting some heat to kinetic energy.
 ///
 /// Air will not disperse if its mass is less than `MINIMUM_DISPERSION_MASS`.
 fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
