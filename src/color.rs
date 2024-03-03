@@ -16,10 +16,13 @@ impl Plugin for ColorPlugin {
 
 
 fn update_colors(
-    particle_grid: Query<&PropertyGrid<Particle>>,
+    particle_grid: Query<&PropertyGrid<Particle>, Changed<PropertyGrid<Particle>>>,
     mut coords: Query<(&Coords, &mut Sprite)>,
 ) {
-    let particle_grid = particle_grid.single();
+    let Ok(particle_grid) = particle_grid.get_single() else {
+        return;
+    };
+
     for (coords, mut sprite) in coords.iter_mut() {
         sprite.color = get_color(particle_grid.get(*coords));
     }
