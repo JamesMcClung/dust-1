@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::sim::{gas::GasProperties, Particle};
+use crate::sim::{gas::GasProperties, Particle, particle};
 use crate::color;
 
 pub struct PalettePlugin;
@@ -26,7 +26,7 @@ struct PaletteDetails;
 #[derive(Component)]
 pub struct ParticleToDraw(pub Option<Particle>);
 
-const INITIAL_PARTICLE_TO_DRAW: &'static str = "Air";
+const INITIAL_PARTICLE_TO_DRAW: &'static str = particle::names::AIR;
 
 fn get_style() -> TextStyle {
     TextStyle {

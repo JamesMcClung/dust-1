@@ -19,8 +19,13 @@ impl Default for Particle {
 impl Particle {
     pub fn name(&self) -> &'static str {
         match self {
-            Self::Vacuum => "Vacuum",
-            Self::Air { .. } => "Air",
+            Self::Vacuum => names::VACUUM,
+            Self::Air { .. } => names::AIR,
         }
     }
+}
+
+pub mod names {
+    pub const VACUUM: &'static str = "Vacuum";
+    pub const AIR: &'static str = "Air";
 }
