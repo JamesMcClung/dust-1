@@ -49,6 +49,10 @@ impl PhysicalProperties {
         calc::kinetic_energy(self.momentum, self.mass)
     }
 
+    pub fn apply_impulse(&mut self, delta_momentum: Vector) {
+        self.momentum += delta_momentum;
+    }
+
     pub fn merge(&mut self, other: Self) {
         if self.mass == 0.0 {
             *self = other;
