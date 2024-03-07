@@ -143,6 +143,14 @@ impl std::ops::Add<RelCoords> for Coords {
     }
 }
 
+impl std::ops::Sub<RelCoords> for Coords {
+    type Output = RelCoords;
+
+    fn sub(self, rhs: RelCoords) -> Self::Output {
+        RelCoords::from(self) - rhs
+    }
+}
+
 // Vector/RelCoords
 
 impl std::ops::Mul<Vector> for RelCoords {

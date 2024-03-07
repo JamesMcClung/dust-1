@@ -1,3 +1,4 @@
+mod dir;
 pub mod gas;
 pub mod gravity;
 pub mod liquid;
@@ -37,7 +38,9 @@ impl Plugin for SimPlugin {
         app
             .add_systems(Startup, (spawn_particle_grid, spawn_sprites).chain())
             .add_plugins(gravity::GravityPlugin)
-            .add_plugins(gas::GasPlugin);
+            .add_plugins(gas::GasPlugin)
+            .add_plugins(liquid::LiquidPlugin)
+        ;
     }
 }
 

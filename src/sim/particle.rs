@@ -27,6 +27,10 @@ impl Particle {
             Self::Water { .. } => names::WATER,
         }
     }
+
+    pub fn collide(&mut self, other: &mut Self) {
+        // todo!()
+    }
 }
 
 pub mod names {

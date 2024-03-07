@@ -4,6 +4,7 @@ use bevy::prelude::*;
 pub enum SimSet {
     Gravity,
     Gas,
+    Liquid,
     Draw,
     Recolor,
 }
@@ -29,7 +30,7 @@ impl Plugin for SchedulePlugin {
                 Update,
                 (
                     SimSet::Draw,
-                    (SimSet::Gravity, SimSet::Gas)
+                    (SimSet::Gravity, SimSet::Liquid, SimSet::Gas)
                         .chain()
                         .run_if(in_state(SimState::Playing).or_else(in_state(SimState::Stepping))),
                     SimSet::Recolor,
