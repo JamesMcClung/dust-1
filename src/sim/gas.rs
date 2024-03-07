@@ -10,7 +10,7 @@ pub struct GasPlugin;
 
 impl Plugin for GasPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, (gas_bulk_flow, gas_dispersion).chain().in_set(SimSet::Gas));
+        app.add_systems(Update, (gas_dispersion, gas_bulk_flow).chain().in_set(SimSet::Gas));
     }
 }
 
