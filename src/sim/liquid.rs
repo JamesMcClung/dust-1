@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::schedule::SimSet;
-use crate::sim::{Coords, Particle, PropertyGrid};
+use crate::sim::{Coords, Particle, PropertyGrid, RelCoords};
 use crate::sim::path;
 use crate::sim::types::Vector;
 use crate::sim::dir::{Steps, Dir};
@@ -103,6 +103,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                     
                     // If unlifted particle would go over the edge of the grid, stop moving
                     None => {
+                        particle.get_physical_properties_mut().unwrap().momentum *= RelCoords::ONE - steps[i].get().abs(); // zero out the bad momentum
                         steps[i] = Dir::Zero;
                         move_into(coords, coords, steps, particle);
                     },

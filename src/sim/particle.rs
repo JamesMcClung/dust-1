@@ -28,7 +28,7 @@ impl Particle {
         }
     }
 
-    fn get_physical_properties_mut(&mut self) -> Option<&mut PhysicalProperties> {
+    pub fn get_physical_properties_mut(&mut self) -> Option<&mut PhysicalProperties> {
         match self {
             Self::Air { gas_properties } => Some(gas_properties),
             Self::Water { liquid_properties } => Some(liquid_properties),
