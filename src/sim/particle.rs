@@ -9,10 +9,10 @@ pub use wall::Wall;
 pub enum Particle {
     Vacuum,
     Air {
-        gas_properties: PhysicalProperties,
+        physical_properties: PhysicalProperties,
     },
     Water {
-        liquid_properties: PhysicalProperties,
+        physical_properties: PhysicalProperties,
     },
     Wall(Wall),
 }
@@ -35,8 +35,8 @@ impl Particle {
 
     pub fn get_physical_properties_mut(&mut self) -> Option<&mut PhysicalProperties> {
         match self {
-            Self::Air { gas_properties } => Some(gas_properties),
-            Self::Water { liquid_properties } => Some(liquid_properties),
+            Self::Air { physical_properties } => Some(physical_properties),
+            Self::Water { physical_properties } => Some(physical_properties),
             _ => None,
         }
     }
@@ -70,8 +70,8 @@ pub mod defualts {
     use crate::sim::physical_properties::defaults;
 
     pub const VACUUM: Particle = Particle::Vacuum;
-    pub const AIR: Particle = Particle::Air { gas_properties: defaults::AIR };
-    pub const WATER: Particle = Particle::Water { liquid_properties: defaults::WATER };
+    pub const AIR: Particle = Particle::Air { physical_properties: defaults::AIR };
+    pub const WATER: Particle = Particle::Water { physical_properties: defaults::WATER };
 
     pub const WALL_REFLECTIVE: Particle = Particle::Wall(Wall::Reflective);
     pub const WALL_ABSORPTIVE: Particle = Particle::Wall(Wall::Absorptive);

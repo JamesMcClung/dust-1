@@ -37,13 +37,13 @@ const HIGH_AIR_TEMPERATURE: Scalar = physical_properties::calc::temperature_cons
 pub fn get_color(particle: &Particle) -> Color {
     match particle {
         Particle::Vacuum => Color::rgba(0.0, 0.0, 0.0, 0.0),
-        Particle::Air { gas_properties } => {
-            let temp_param = sigmoid(gas_properties.temperature() / HIGH_AIR_TEMPERATURE - 0.5);
+        Particle::Air { physical_properties } => {
+            let temp_param = sigmoid(physical_properties.temperature() / HIGH_AIR_TEMPERATURE - 0.5);
             Color::rgba(
                 temp_param,
                 1.0 - temp_param,
                 1.0 - temp_param,
-                gas_properties.mass / physical_properties::defaults::AIR.mass,
+                physical_properties.mass / physical_properties::defaults::AIR.mass,
             )
         },
         Particle::Water { .. } => {

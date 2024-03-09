@@ -244,9 +244,9 @@ mod tests {
 
 
 
-    fn disperse_4_ways(gas_properties: &mut PhysicalProperties) -> Vec<PhysicalProperties> {
+    fn disperse_4_ways(physical_properties: &mut PhysicalProperties) -> Vec<PhysicalProperties> {
         let dirs = [Vector::new(1.0, 0.0), Vector::new(0.0, 1.0), Vector::new(-1.0, 0.0), Vector::new(0.0, -1.0)];
-        gas_properties.disperse(dirs.into())
+        physical_properties.disperse(dirs.into())
     }
 
     #[test]

@@ -198,8 +198,8 @@ fn get_text_color(particle: &Particle) -> Color {
 fn get_details(particle: &Particle) -> String {
     match particle {
         Particle::Vacuum => "".into(),
-        Particle::Air { gas_properties } => physical_property_details(gas_properties),
-        Particle::Water { liquid_properties } => physical_property_details(liquid_properties),
+        Particle::Air { physical_properties } => physical_property_details(physical_properties),
+        Particle::Water { physical_properties } => physical_property_details(physical_properties),
         Particle::Wall(wall) => wall_details(wall),
     }
 }

@@ -32,8 +32,8 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let dirs = [RelCoords::new(-1, 0), RelCoords::new(1, 0), RelCoords::new(0, -1), RelCoords::new(0, 1)];
 
     for coords in particles.coords() {
-        if let Particle::Air { gas_properties } = particles.get(coords) {
-            if gas_properties.mass < MINIMUM_DISPERSION_MASS {
+        if let Particle::Air { physical_properties } = particles.get(coords) {
+            if physical_properties.mass < MINIMUM_DISPERSION_MASS {
                 continue;
             }
 
@@ -48,8 +48,8 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
                 }
             }
             
-            let Particle::Air { gas_properties } = particles.get_mut(coords) else { panic!() };
-            let dispersed_props = gas_properties.disperse(neighbor_dirs.iter().map(|dir| Vector::from(*dir)).collect());
+            let Particle::Air { physical_properties } = particles.get_mut(coords) else { panic!() };
+            let dispersed_props = physical_properties.disperse(neighbor_dirs.iter().map(|dir| Vector::from(*dir)).collect());
             for (dir, props) in std::iter::zip(neighbor_dirs, dispersed_props) {
                 prop_deltas.try_get_mut(coords + dir).unwrap().merge(props);
             }
@@ -60,9 +60,9 @@ fn gas_dispersion(mut particles: Query<&mut PropertyGrid<Particle>>) {
         let prop_deltas = prop_deltas.get(coords);
         if prop_deltas.mass != 0.0 {
             match particles.get_mut(coords) {
-                Particle::Air { gas_properties } => gas_properties.merge(*prop_deltas),
+                Particle::Air { physical_properties } => physical_properties.merge(*prop_deltas),
                 p @ Particle::Vacuum => *p = Particle::Air {
-                    gas_properties: *prop_deltas,
+                    physical_properties: *prop_deltas,
                 },
                 _ => (),
             }
@@ -75,21 +75,21 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let mut moved_gases = Vec::<(Coords, PhysicalProperties)>::new();
     
     for coords in particles.coords() {
-        if let Particle::Air { gas_properties } = particles.get(coords) {
-            let velocity = gas_properties.velocity();
-            let new_pos = gas_properties.internal_position + velocity;
+        if let Particle::Air { physical_properties } = particles.get(coords) {
+            let velocity = physical_properties.velocity();
+            let new_pos = physical_properties.internal_position + velocity;
 
             if 0.0 <= new_pos.x && new_pos.x < 1.0
             && 0.0 <= new_pos.y && new_pos.y < 1.0 {
-                let Particle::Air { gas_properties } = particles.get_mut(coords) else { panic!() };
-                gas_properties.internal_position = new_pos;
+                let Particle::Air { physical_properties } = particles.get_mut(coords) else { panic!() };
+                physical_properties.internal_position = new_pos;
                 continue;
             }
 
             let mut net_reflect = RelCoords::new(1, 1);
             let mut end_coords = coords;
 
-            for delta in path::get_path_deltas(gas_properties.internal_position, new_pos) {
+            for delta in path::get_path_deltas(physical_properties.internal_position, new_pos) {
                 let delta = delta * net_reflect;
                 let next_coords = coords + delta;
 
@@ -105,24 +105,24 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                 }
             }
 
-            let Particle::Air { mut gas_properties } = particles.swap(coords, Particle::Vacuum) else { panic!() };
-            gas_properties.momentum *= net_reflect;
+            let Particle::Air { mut physical_properties } = particles.swap(coords, Particle::Vacuum) else { panic!() };
+            physical_properties.momentum *= net_reflect;
             if net_reflect.x < 0 {
-                gas_properties.internal_position.x = 1.0 - gas_properties.internal_position.x;
+                physical_properties.internal_position.x = 1.0 - physical_properties.internal_position.x;
             }
             if net_reflect.y < 0 {
-                gas_properties.internal_position.y = 1.0 - gas_properties.internal_position.y;
+                physical_properties.internal_position.y = 1.0 - physical_properties.internal_position.y;
             }
-            gas_properties.internal_position += velocity * net_reflect;
-            gas_properties.internal_position = gas_properties.internal_position.fract(); // note Vec2::fract behaves differently from f32::fract
-            moved_gases.push((end_coords, gas_properties));
+            physical_properties.internal_position += velocity * net_reflect;
+            physical_properties.internal_position = physical_properties.internal_position.fract(); // note Vec2::fract behaves differently from f32::fract
+            moved_gases.push((end_coords, physical_properties));
         }
     }
 
-    for (coords, moved_gas_properties) in moved_gases {
+    for (coords, moved_physical_properties) in moved_gases {
         match particles.get_mut(coords) {
-            p @ Particle::Vacuum => *p = Particle::Air { gas_properties: moved_gas_properties },
-            Particle::Air { gas_properties } => gas_properties.merge(moved_gas_properties),
+            p @ Particle::Vacuum => *p = Particle::Air { physical_properties: moved_physical_properties },
+            Particle::Air { physical_properties } => physical_properties.merge(moved_physical_properties),
             _ => panic!(),
         }
     }
