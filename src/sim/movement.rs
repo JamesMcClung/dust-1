@@ -155,7 +155,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                         // hit each other and send each other back, so nothing to handle in this case.
                         
                         // No matter what, it will end up at its old spot, so do that
-                        if matches!(particles.get(prev_coords), Particle::Water {..}) {
+                        if !matches!(particles.get(prev_coords), Particle::Vacuum) {
                             dbg!(prev_coords);
                             dbg!(coords);
                             panic!();
