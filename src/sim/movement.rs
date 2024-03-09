@@ -24,21 +24,25 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
 
     // 1. Lift particles that will move to a different cell
     for coords in particles.coords() {
-        if let Particle::Water { liquid_properties } = particles.get_mut(coords) {
-            let new_pos = liquid_properties.internal_position + liquid_properties.velocity();
+        let particle = particles.get_mut(coords);
+        if !matches!(particle, Particle::Water { .. }) {
+            continue;
+        }
+        if let Some(physical_properties) = particle.get_physical_properties_mut() {
+            let new_pos = physical_properties.internal_position + physical_properties.velocity();
             if is_in_cell(&new_pos) {
-                liquid_properties.internal_position = new_pos;
+                physical_properties.internal_position = new_pos;
                 continue;
             } 
             
-            liquid_properties.internal_position = new_pos.fract();
+            physical_properties.internal_position = new_pos.fract();
 
-            let steps = path::get_path_deltas(liquid_properties.internal_position, new_pos)
+            let steps = path::get_path_deltas(physical_properties.internal_position, new_pos)
                 .into_iter()
                 .map(Dir::from)
                 .collect::<Vec<_>>();
-            let particle = particles.swap(coords, Particle::Vacuum);
-            *moving_particles_next.get_mut(coords) = MovingParticle::Some((steps.into(), particle));
+
+            *moving_particles_next.get_mut(coords) = MovingParticle::Some((steps.into(), std::mem::replace(particle, Particle::Vacuum)));
             moving_coords_next.push(coords);
         }
     }
