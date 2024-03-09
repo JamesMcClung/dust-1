@@ -33,7 +33,7 @@ impl Particle {
         }
     }
 
-    pub fn get_physical_properties_mut(&mut self) -> Option<&mut PhysicalProperties> {
+    pub fn physical_properties_mut(&mut self) -> Option<&mut PhysicalProperties> {
         match self {
             Self::Air { physical_properties } => Some(physical_properties),
             Self::Water { physical_properties } => Some(physical_properties),
@@ -42,7 +42,7 @@ impl Particle {
     }
 
     pub fn collide(&mut self, other: &mut Self, delta_cell: Vector) {
-        if let (Some(properties_1), Some(properties_2)) = (self.get_physical_properties_mut(), other.get_physical_properties_mut()) {
+        if let (Some(properties_1), Some(properties_2)) = (self.physical_properties_mut(), other.physical_properties_mut()) {
             let pos_2 = properties_2.internal_position + delta_cell;
             
             let collision_dir = (pos_2 - properties_1.internal_position).normalize();

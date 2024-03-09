@@ -66,7 +66,7 @@ fn draw_particle(
 }
 
 fn randomize_internal_position(rng: &mut ThreadRng, mut particle: Particle) -> Particle {
-    if let Some(internal_position) = particle.get_physical_properties_mut() {
+    if let Some(internal_position) = particle.physical_properties_mut() {
         internal_position.internal_position.x = rng.gen();
         internal_position.internal_position.y = rng.gen();
         particle

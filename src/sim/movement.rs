@@ -28,7 +28,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
         if !matches!(particle, Particle::Water { .. }) {
             continue;
         }
-        if let Some(physical_properties) = particle.get_physical_properties_mut() {
+        if let Some(physical_properties) = particle.physical_properties_mut() {
             let new_pos = physical_properties.internal_position + physical_properties.velocity();
             if is_in_cell(&new_pos) {
                 physical_properties.internal_position = new_pos;
@@ -108,7 +108,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                     
                     // If unlifted particle would go over the edge of the grid, stop moving
                     None => {
-                        particle.get_physical_properties_mut().unwrap().momentum *= RelCoords::ONE - steps[i].get().abs(); // zero out the bad momentum
+                        particle.physical_properties_mut().unwrap().momentum *= RelCoords::ONE - steps[i].get().abs(); // zero out the bad momentum
                         steps[i] = Dir::Zero;
                         move_into(coords, coords, steps, particle);
                     },
