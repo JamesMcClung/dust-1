@@ -101,7 +101,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
 
                     // If unlifted particle is not vacuum, hit it and don't move
                     Some(obstacle) => {
-                        particle.collide(obstacle, steps[i].get().into());
+                        particle.collide(obstacle, steps[i].get());
                         steps[i] = Dir::Zero;
                         move_into(coords, coords, steps, particle);
                     },
@@ -127,7 +127,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
             let mut v2 = Vec::with_capacity(v.len());
             while let Some((dir, mut particle)) = v.pop() {
                 for (other_dir, p) in v.iter_mut() {
-                    particle.collide(p, (dir.get() - other_dir.get()).into());
+                    particle.collide(p, dir.get() - other_dir.get());
                 }
                 v2.push((dir, particle));
             }
@@ -146,7 +146,7 @@ fn liquid_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                         // If another particle tried to move into its old spot, start a conflict
                         if let conflict @ MovingParticle::Some(_) = moving_particles_next.get_mut(prev_coords) {
                             let (conflict_steps, mut conflict_particle) = conflict.to_conflict();
-                            particle.collide(&mut conflict_particle, dir.get().into());
+                            particle.collide(&mut conflict_particle, dir.get());
                             conflict.push_to_conflict(conflict_steps[i], conflict_particle);
                             conflict_coords.push(prev_coords);
                         }
