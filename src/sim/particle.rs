@@ -2,7 +2,7 @@ mod wall;
 
 use bevy::prelude::Component;
 
-use super::{types::Vector, PhysicalProperties};
+use super::{dir::Dir, types::Vector, PhysicalProperties, RelCoords};
 pub use wall::Wall;
 
 #[derive(Clone, Copy, Component)]
@@ -42,8 +42,19 @@ impl Particle {
     }
 
     pub fn collide(&mut self, other: &mut Self, delta_cell: Vector) {
-        if let (Some(properties_1), Some(properties_2)) = (self.physical_properties_mut(), other.physical_properties_mut()) {
-            properties_1.collide(properties_2, delta_cell);
+        match (self, other) {
+            (
+                Self::Air { physical_properties: props_1 } | Self::Water { physical_properties: props_1 },
+                Self::Air { physical_properties: props_2 } | Self::Water { physical_properties: props_2 },
+            ) => props_1.collide(props_2, delta_cell),
+            (
+                Self::Wall(wall),
+                Self::Air { physical_properties } | Self::Water { physical_properties },
+            ) | (
+                Self::Air { physical_properties } | Self::Water { physical_properties },
+                Self::Wall(wall),
+            ) => wall.collide(physical_properties, Dir::from(RelCoords::from(delta_cell))),
+            _ => (),
         }
     }
 }
