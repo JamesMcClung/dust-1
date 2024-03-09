@@ -43,16 +43,7 @@ impl Particle {
 
     pub fn collide(&mut self, other: &mut Self, delta_cell: Vector) {
         if let (Some(properties_1), Some(properties_2)) = (self.physical_properties_mut(), other.physical_properties_mut()) {
-            let pos_2 = properties_2.internal_position + delta_cell;
-            
-            let collision_dir = (pos_2 - properties_1.internal_position).normalize();
-            let total_mass = properties_1.mass + properties_2.mass;
-
-            let delta_p_1 = (properties_1.mass * properties_2.momentum - properties_2.mass * properties_1.momentum).project_onto(collision_dir) / total_mass;
-            let delta_p_2 = (properties_2.mass * properties_1.momentum - properties_1.mass * properties_2.momentum).project_onto(collision_dir) / total_mass;
-
-            properties_1.momentum += delta_p_1;
-            properties_2.momentum += delta_p_2;
+            properties_1.collide(properties_2, delta_cell);
         }
     }
 }

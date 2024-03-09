@@ -111,6 +111,19 @@ impl PhysicalProperties {
             specific_heat: self.specific_heat,
         }).collect()
     }
+
+    pub fn collide(&mut self, other: &mut Self, delta_cell: Vector) {
+        let pos_2 = other.internal_position + delta_cell;
+            
+        let collision_dir = (pos_2 - self.internal_position).normalize();
+        let total_mass = self.mass + other.mass;
+
+        let delta_p_1 = (self.mass * other.momentum - other.mass * self.momentum).project_onto(collision_dir) / total_mass;
+        let delta_p_2 = (other.mass * self.momentum - self.mass * other.momentum).project_onto(collision_dir) / total_mass;
+
+        self.momentum += delta_p_1;
+        other.momentum += delta_p_2;
+    }
 }
 
 
