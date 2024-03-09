@@ -1,6 +1,9 @@
+mod wall;
+
 use bevy::prelude::Component;
 
 use super::{types::Vector, PhysicalProperties};
+pub use wall::Wall;
 
 #[derive(Clone, Copy, Component)]
 pub enum Particle {
@@ -11,6 +14,7 @@ pub enum Particle {
     Water {
         liquid_properties: PhysicalProperties,
     },
+    Wall(Wall),
 }
 
 impl Default for Particle {
@@ -25,6 +29,7 @@ impl Particle {
             Self::Vacuum => names::VACUUM,
             Self::Air { .. } => names::AIR,
             Self::Water { .. } => names::WATER,
+            Self::Wall(_) => names::WALL,
         }
     }
 
@@ -56,13 +61,18 @@ pub mod names {
     pub const VACUUM: &'static str = "Vacuum";
     pub const AIR: &'static str = "Air";
     pub const WATER: &'static str = "Water";
+
+    pub const WALL: &'static str = "Wall";
 }
 
 pub mod defualts {
-    use super::Particle;
+    use super::{Particle, Wall};
     use crate::sim::physical_properties::defaults;
 
     pub const VACUUM: Particle = Particle::Vacuum;
     pub const AIR: Particle = Particle::Air { gas_properties: defaults::AIR };
     pub const WATER: Particle = Particle::Water { liquid_properties: defaults::WATER };
+
+    pub const WALL_REFLECTIVE: Particle = Particle::Wall(Wall::Reflective);
+    pub const WALL_ABSORPTIVE: Particle = Particle::Wall(Wall::Absorptive);
 }

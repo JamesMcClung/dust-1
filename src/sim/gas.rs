@@ -94,13 +94,14 @@ fn gas_bulk_flow(mut particles: Query<&mut PropertyGrid<Particle>>) {
                 let next_coords = coords + delta;
 
                 match particles.try_get(next_coords) {
+                    Some(Particle::Vacuum | Particle::Air {..}) => {
+                        end_coords = next_coords.try_into().unwrap()
+                    },
                     None | Some(Particle::Water {..}) => {
                         let reflect = RelCoords::ONE - 2 * delta.abs();
                         net_reflect *= reflect;
                     },
-                    Some(Particle::Vacuum | Particle::Air {..}) => {
-                        end_coords = next_coords.try_into().unwrap()
-                    },
+                    Some(Particle::Wall(_)) => unimplemented!(),
                 }
             }
 

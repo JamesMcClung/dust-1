@@ -48,7 +48,8 @@ pub fn get_color(particle: &Particle) -> Color {
         },
         Particle::Water { .. } => {
             Color::rgba(0.0, 0.8, 0.9, 0.9)
-        }
+        },
+        Particle::Wall(_) => Color::GRAY,
     }
 }
 

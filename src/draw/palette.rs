@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::sim::{particle, Particle, PhysicalProperties};
+use crate::sim::particle::Wall;
 use crate::color;
 
 pub struct PalettePlugin;
@@ -199,6 +200,7 @@ fn get_details(particle: &Particle) -> String {
         Particle::Vacuum => "".into(),
         Particle::Air { gas_properties } => physical_property_details(gas_properties),
         Particle::Water { liquid_properties } => physical_property_details(liquid_properties),
+        Particle::Wall(wall) => wall_details(wall),
     }
 }
 
@@ -214,4 +216,16 @@ fn physical_property_details(properties: &PhysicalProperties) -> String {
   - velocity:    ({vx:4.2}, {vy:4.2}) m/s
   - temperature: {temperature:5.1} K\
 ")
+}
+
+fn wall_details(wall: &Wall) -> String {
+    format!("\
+* Wall Properties
+  - kind: {}\
+        ",
+        match wall {
+            Wall::Absorptive => "absorptive",
+            Wall::Reflective => "reflective",
+        }
+    )
 }
