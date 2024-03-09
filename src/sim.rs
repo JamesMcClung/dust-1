@@ -1,3 +1,4 @@
+mod coords;
 mod dir;
 pub mod gas;
 pub mod gravity;
@@ -7,7 +8,6 @@ pub mod path;
 pub mod physical_properties;
 mod property_grid;
 pub mod types;
-mod coords;
 
 
 use bevy::prelude::*;
