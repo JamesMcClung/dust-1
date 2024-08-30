@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
-use crate::sim::{gas::GasProperties, Particle, particle};
+use crate::sim::{particle, Particle, PhysicalProperties};
+use crate::sim::particle::Wall;
 use crate::color;
 
 pub struct PalettePlugin;
@@ -99,8 +100,9 @@ fn setup_palette(mut commands: Commands) {
             });
             
             let elements = [
-                Particle::Vacuum,
-                Particle::Air { gas_properties: default() },
+                particle::defualts::VACUUM,
+                particle::defualts::AIR,
+                particle::defualts::WATER,
             ];
 
             for element in elements {
@@ -196,20 +198,34 @@ fn get_text_color(particle: &Particle) -> Color {
 fn get_details(particle: &Particle) -> String {
     match particle {
         Particle::Vacuum => "".into(),
-        Particle::Air { gas_properties } => gas_property_details(gas_properties),
+        Particle::Air { physical_properties } => physical_property_details(physical_properties),
+        Particle::Water { physical_properties } => physical_property_details(physical_properties),
+        Particle::Wall(wall) => wall_details(wall),
     }
 }
 
-fn gas_property_details(gas_properties: &GasProperties) -> String {
-    let mass = gas_properties.mass;
-    let velocity = gas_properties.velocity();
+fn physical_property_details(properties: &PhysicalProperties) -> String {
+    let mass = properties.mass;
+    let velocity = properties.velocity();
     let vx = velocity.x;
     let vy = velocity.y;
-    let temperature = gas_properties.temperature();
+    let temperature = properties.temperature();
     format!("\
-* Gas Properties
+* Physical Properties
   - mass:        {mass:5.1} kg
   - velocity:    ({vx:4.2}, {vy:4.2}) m/s
   - temperature: {temperature:5.1} K\
 ")
+}
+
+fn wall_details(wall: &Wall) -> String {
+    format!("\
+* Wall Properties
+  - kind: {}\
+        ",
+        match wall {
+            Wall::Absorptive => "absorptive",
+            Wall::Reflective => "reflective",
+        }
+    )
 }

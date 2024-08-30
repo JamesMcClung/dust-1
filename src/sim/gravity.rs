@@ -18,10 +18,9 @@ fn apply_gravity(mut particles: Query<&mut PropertyGrid<Particle>>) {
     let mut particles = particles.single_mut();
     for coords in particles.coords() {
         match particles.get_mut(coords) {
-            Particle::Vacuum => {},
-            Particle::Air { gas_properties } => {
-                gas_properties.momentum += GRAVITY_ACCELERATION * gas_properties.mass; 
-            }
+            Particle::Vacuum | Particle::Wall(_) => (),
+            Particle::Air { physical_properties } => physical_properties.apply_impulse(GRAVITY_ACCELERATION * physical_properties.mass),
+            Particle::Water { physical_properties } => physical_properties.apply_impulse(GRAVITY_ACCELERATION * physical_properties.mass),
         }
     }
 }

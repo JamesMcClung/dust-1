@@ -1,10 +1,14 @@
+mod coords;
+mod dir;
 pub mod gas;
 pub mod gravity;
+pub mod liquid;
+mod movement;
 pub mod particle;
 pub mod path;
+pub mod physical_properties;
 mod property_grid;
 pub mod types;
-mod coords;
 
 
 use bevy::prelude::*;
@@ -14,6 +18,7 @@ use crate::camera::grid_to_camera;
 pub use particle::Particle;
 pub use property_grid::PropertyGrid;
 pub use coords::{Coords, RelCoords};
+pub use physical_properties::PhysicalProperties;
 
 
 pub const N_PIXELS: Coords = Coords::new(128, 128);
@@ -34,7 +39,10 @@ impl Plugin for SimPlugin {
         app
             .add_systems(Startup, (spawn_particle_grid, spawn_sprites).chain())
             .add_plugins(gravity::GravityPlugin)
-            .add_plugins(gas::GasPlugin);
+            .add_plugins(movement::MovementPlugin)
+            .add_plugins(gas::GasPlugin)
+            .add_plugins(liquid::LiquidPlugin)
+        ;
     }
 }
 

@@ -21,13 +21,11 @@ impl<T> PropertyGrid<T> {
         res
     }
     
-    pub fn get(&self, coords: impl Into<Coords>) -> &T {
-        let coords = coords.into();
+    pub fn get(&self, coords: Coords) -> &T {
         &self.arr[coords.x][coords.y]
     }
 
-    pub fn get_mut(&mut self, coords: impl Into<Coords>) -> &mut T {
-        let coords = coords.into();
+    pub fn get_mut(&mut self, coords: Coords) -> &mut T {
         &mut self.arr[coords.x][coords.y]
     }
 

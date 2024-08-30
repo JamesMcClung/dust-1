@@ -1,12 +1,14 @@
 mod palette;
 
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::camera::{camera_to_grid, window_to_camera};
 use crate::sim::types::Vector;
 use crate::sim::{path, Particle, PropertyGrid};
 use crate::schedule::SimSet;
 use palette::ParticleToDraw;
+use rand::rngs::ThreadRng;
 
 #[derive(Component)]
 struct LastCursorCoords(Option<Vector>);
@@ -48,9 +50,11 @@ fn draw_particle(
             let end = camera_to_grid(window_to_camera(cursor_position, window, camera));
             let start = last_cursor_coords.0.unwrap_or(end);
 
+            let mut rng = rand::thread_rng();
+
             for coords in path::get_path(start, end) {
                 if let Some(particle) = particle_grid.try_get_mut(coords) {
-                    *particle = *particle_to_draw;
+                    *particle = randomize_internal_position(&mut rng, particle_to_draw.clone());
                 }
             }
 
@@ -58,5 +62,15 @@ fn draw_particle(
         }
     } else {
         last_cursor_coords.0 = None;
+    }
+}
+
+fn randomize_internal_position(rng: &mut ThreadRng, mut particle: Particle) -> Particle {
+    if let Some(internal_position) = particle.physical_properties_mut() {
+        internal_position.internal_position.x = rng.gen();
+        internal_position.internal_position.y = rng.gen();
+        particle
+    } else {
+        particle
     }
 }
